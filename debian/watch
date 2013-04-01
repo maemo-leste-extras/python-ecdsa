@@ -1,0 +1,3 @@
+version=3
+https://github.com/warner/python-ecdsa/tags \
+.*/archive/python-ecdsa-(\d\S*)\.tar\.gz
