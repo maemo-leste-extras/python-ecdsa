@@ -1,0 +1,29 @@
+python-ecdsa (0.10-1) unstable; urgency=low
+
+  * New upstream release. (Closes: #730663)
+  * New maintainer. (Closes: #731789)
+  * debian/control:
+    - Move Homepage to Source paragraph.
+    - Update Standards-Version to 3.9.5.
+    - Add openssl to Build-Depends for compatibility tests.
+  * debian/rules:
+    - Install upstream changelog.
+    - Make sure that test data is not installed.
+  * Switch to pybuild:
+    - debian/control: Add dh-python to Build-Depends.
+    - debian/rules: Use pybuild build system.
+  * debian/copyright:
+    - Convert to Copyright Format 1.0.
+    - Add myself.
+  * Use python-six instead of embedded copy.
+    - debian/patches/system-six.patch: Adopt imports to system copy.
+    - debian/rules: Make sure that embedded copy is not installed.
+    - debian/control: Add python-six to (Build-)Depends.
+
+ -- Sebastian Ramacher <sramacher@debian.org>  Tue, 10 Dec 2013 05:05:35 +0100
+
+python-ecdsa (0.8-1) unstable; urgency=low
+
+  * Initial package in Debian.  Closes: #704474.
+
+ -- Bart Martens <bartm@debian.org>  Mon, 01 Apr 2013 16:34:34 +0000
