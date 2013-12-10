@@ -1,14 +1,25 @@
 Source: python-ecdsa
-Maintainer: Bart Martens <bartm@debian.org>
 Section: python
 Priority: optional
-Build-Depends: python-all (>= 2.7.3-4), debhelper (>= 9)
-Standards-Version: 3.9.4
+Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
+Uploaders: Sebastian Ramacher <sramacher@debian.org>
+Build-Depends:
+ debhelper (>= 9),
+ dh-python,
+ python-all,
+ python-six (>= 1.2),
+ openssl
+Homepage: https://github.com/warner/python-ecdsa
+Vcs-Browser: http://anonscm.debian.org/viewvc/python-modules/packages/python-ecdsa/trunk/
+Vcs-Svn: svn://anonscm.debian.org/python-modules/packages/python-ecdsa/trunk/
+Standards-Version: 3.9.5
 
 Package: python-ecdsa
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}
-Homepage: https://github.com/warner/python-ecdsa
+Depends:
+ ${misc:Depends},
+ ${python:Depends},
+ python-six (>= 1.2)
 Description: ECDSA cryptographic signature library (pure python)
  This is an easy-to-use implementation of ECDSA cryptography (Elliptic Curve
  Digital Signature Algorithm), implemented purely in Python.  With this library,
