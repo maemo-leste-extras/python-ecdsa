@@ -1,0 +1,17 @@
+Description: Add upstream's ecdsa/_version.py
+ The tarball from GitHub does not contain this file. However, the tarball from
+ PyPI includes it. The file is needed to get the correct version information for
+ setup.py. Until we switch to PyPI as source for upstream tarballs with the next
+ release, include it via a patch.
+Origin: upstream,
+ https://pypi.python.org/packages/source/e/ecdsa/ecdsa-0.10.tar.gz
+Last-Update: 2013-12-10
+
+--- /dev/null
++++ python-ecdsa-0.10/ecdsa/_version.py
+@@ -0,0 +1,5 @@
++
++# This file is originally generated from Git information by running 'setup.py
++# version'. Distribution tarballs contain a pre-generated copy of this file.
++
++__version__ = '0.10'

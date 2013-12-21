@@ -1,12 +1,11 @@
 #!/usr/bin/make -f
 
 %:
-	dh $@ --with python2 --buildsystem=pybuild
+	dh $@ --with python2,python3 --buildsystem=pybuild
 
 override_dh_installchangelogs:
 	dh_installchangelogs NEWS
 
-override_dh_install:
-	dh_install
-	find debian/python-ecdsa -name "six.py" -delete
-	find debian/python-ecdsa -name "t" -type d -prune -exec rm -rf '{}' \;
+override_dh_auto_install:
+	dh_auto_install
+	find debian/tmp -name "six.py" -delete

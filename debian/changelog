@@ -1,3 +1,16 @@
+python-ecdsa (0.10-2) unstable; urgency=low
+
+  * Add Python 3 package.
+    - debian/rules: Add --with python3.
+    - debian/python{,3}-ecdsa.install: Add install files to place files in
+      correct packages.
+    - debian/control: Add python3-all and python3-six to Build-Depends.
+  * debian/copyright: Relicense Debian packaging as Expat.
+  * debian/patches/upstream-_version.patch: Add upstream's ecdsa/_version.py
+    which is not included in the tarball from GitHub.
+
+ -- Sebastian Ramacher <sramacher@debian.org>  Sat, 21 Dec 2013 17:09:07 +0100
+
 python-ecdsa (0.10-1) unstable; urgency=low
 
   * New upstream release. (Closes: #730663)
