@@ -1,0 +1,2 @@
+usr/lib/python2*/*-packages/ecdsa/*.py
+usr/lib/python2*/*-packages/ecdsa*.egg-info
