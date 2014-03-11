@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: python-ecdsa
 Upstream-Contact: Brian Warner <warner-pyecdsa@lothar.com>
-Source: https://github.com/warner/python-ecdsa
+Source: https://pypi.python.org/pypi/ecdsa
 
 Files: *
 Copyright: 2010 Brian Warner <warner-pyecdsa@lothar.com>
@@ -14,7 +14,7 @@ Copyright: 2010-2012 Benjamin Peterson <benjamin@python.org>
 License: Expat
 
 Files: debian/*
-Copyright: 2013 Sebastian Ramacher <sramacher@debian.org>
+Copyright: 2013-2014 Sebastian Ramacher <sramacher@debian.org>
 License: Expat
 Comment:
  The previous packaging was done by Bart Martens <bartm@knars.be>. He kindly
