@@ -1,3 +1,19 @@
+python-ecdsa (0.11-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Switch to tarball from PyPI:
+    - debian/watch: Use PyPI.
+    - debian/patches/upstream-_version.patch: Removed, no longer needed.
+    - debian/copyright: Point Source to PyPI.
+  * debian/copyright: Update copyright years.
+  * Add DEP-8 tests:
+    - debian/tests: Add tests.
+    - debian/control: Add XS-Testsuite.
+  * debian/control: Add X-Python-Version. Upstream dropped support for
+    anything before 2.6.
+
+ -- Sebastian Ramacher <sramacher@debian.org>  Tue, 11 Mar 2014 13:15:59 +0100
+
 python-ecdsa (0.10-2) unstable; urgency=low
 
   * Add Python 3 package.
