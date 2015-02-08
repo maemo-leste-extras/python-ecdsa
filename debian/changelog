@@ -1,3 +1,12 @@
+python-ecdsa (0.13-1) experimental; urgency=medium
+
+  * New upstream release.
+  * debian/watch: Use PyPI redirector.
+  * debian/patches/system-six.patch: Refresh patch.
+  * debian/control: Bump Standards-Version.
+
+ -- Sebastian Ramacher <sramacher@debian.org>  Mon, 09 Feb 2015 00:59:40 +0100
+
 python-ecdsa (0.11-1) unstable; urgency=medium
 
   * New upstream release.
