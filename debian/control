@@ -14,7 +14,7 @@ Build-Depends:
 Homepage: https://github.com/warner/python-ecdsa
 Vcs-Browser: http://anonscm.debian.org/viewvc/python-modules/packages/python-ecdsa/trunk/
 Vcs-Svn: svn://anonscm.debian.org/python-modules/packages/python-ecdsa/trunk/
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 X-Python-Version: >= 2.6
 X-Python3-Version: >= 3.2
 XS-Testsuite: autopkgtest
