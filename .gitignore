@@ -1,0 +1,7 @@
+/.coverage
+/coverage-html/
+/t/
+/build/
+/ecdsa/_version.py
+/MANIFEST
+/dist/
