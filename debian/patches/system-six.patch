@@ -1,10 +1,27 @@
-Description: Use python-six instead of embedded copy
-Author: Sebastian Ramacher <sramacher@debian.org>
+From 3e028962004995f2e049f64988e1a2f653cf0cb3 Mon Sep 17 00:00:00 2001
+From: Sebastian Ramacher <sramacher@debian.org>
+Date: Thu, 8 Oct 2015 11:59:02 -0700
+Subject: Use python-six instead of embedded copy
+
 Last-Update: 2013-12-09
 
+Patch-Name: system-six.patch
+---
+ ecdsa/der.py           | 2 +-
+ ecdsa/ecdsa.py         | 2 +-
+ ecdsa/ellipticcurve.py | 2 +-
+ ecdsa/keys.py          | 2 +-
+ ecdsa/numbertheory.py  | 4 ++--
+ ecdsa/rfc6979.py       | 2 +-
+ ecdsa/test_pyecdsa.py  | 2 +-
+ ecdsa/util.py          | 2 +-
+ 8 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/ecdsa/der.py b/ecdsa/der.py
+index b045952..09b687b 100644
 --- a/ecdsa/der.py
 +++ b/ecdsa/der.py
-@@ -2,7 +2,7 @@
+@@ -2,7 +2,7 @@ from __future__ import division
  
  import binascii
  import base64
@@ -13,9 +30,11 @@ Last-Update: 2013-12-09
  
  class UnexpectedDER(Exception):
      pass
+diff --git a/ecdsa/ecdsa.py b/ecdsa/ecdsa.py
+index 4eb2d39..8ed0247 100644
 --- a/ecdsa/ecdsa.py
 +++ b/ecdsa/ecdsa.py
-@@ -53,7 +53,7 @@
+@@ -53,7 +53,7 @@ Revision history:
  Written in 2005 by Peter Pearson and placed in the public domain.
  """
  
@@ -24,6 +43,8 @@ Last-Update: 2013-12-09
  from . import ellipticcurve
  from . import numbertheory
  import random
+diff --git a/ecdsa/ellipticcurve.py b/ecdsa/ellipticcurve.py
+index 390bb35..ba83847 100644
 --- a/ecdsa/ellipticcurve.py
 +++ b/ecdsa/ellipticcurve.py
 @@ -34,7 +34,7 @@
@@ -35,9 +56,11 @@ Last-Update: 2013-12-09
  from . import numbertheory
  
  class CurveFp( object ):
+diff --git a/ecdsa/keys.py b/ecdsa/keys.py
+index 5b52125..c54bad6 100644
 --- a/ecdsa/keys.py
 +++ b/ecdsa/keys.py
-@@ -7,7 +7,7 @@
+@@ -7,7 +7,7 @@ from .curves import NIST192p, find_curve
  from .util import string_to_number, number_to_string, randrange
  from .util import sigencode_string, sigdecode_string
  from .util import oid_ecPublicKey, encoded_oid_ecPublicKey
@@ -46,6 +69,8 @@ Last-Update: 2013-12-09
  from hashlib import sha1
  
  class BadSignatureError(Exception):
+diff --git a/ecdsa/numbertheory.py b/ecdsa/numbertheory.py
+index 7ace0dc..aab98ac 100644
 --- a/ecdsa/numbertheory.py
 +++ b/ecdsa/numbertheory.py
 @@ -11,8 +11,8 @@
@@ -59,9 +84,11 @@ Last-Update: 2013-12-09
  
  import math
  
+diff --git a/ecdsa/rfc6979.py b/ecdsa/rfc6979.py
+index 6190ebd..9e11184 100644
 --- a/ecdsa/rfc6979.py
 +++ b/ecdsa/rfc6979.py
-@@ -12,7 +12,7 @@
+@@ -12,7 +12,7 @@ Many thanks to Coda Hale for his implementation in Go language:
  import hmac
  from binascii import hexlify
  from .util import number_to_string, number_to_string_crop
@@ -70,9 +97,11 @@ Last-Update: 2013-12-09
  
  try:
      bin(0)
+diff --git a/ecdsa/test_pyecdsa.py b/ecdsa/test_pyecdsa.py
+index 326cac4..92411e1 100644
 --- a/ecdsa/test_pyecdsa.py
 +++ b/ecdsa/test_pyecdsa.py
-@@ -8,7 +8,7 @@
+@@ -8,7 +8,7 @@ import subprocess
  from binascii import hexlify, unhexlify
  from hashlib import sha1, sha256, sha512
  
@@ -81,9 +110,11 @@ Last-Update: 2013-12-09
  from .keys import SigningKey, VerifyingKey
  from .keys import BadSignatureError
  from . import util
+diff --git a/ecdsa/util.py b/ecdsa/util.py
+index c51ed3d..df4f720 100644
 --- a/ecdsa/util.py
 +++ b/ecdsa/util.py
-@@ -6,7 +6,7 @@
+@@ -6,7 +6,7 @@ import binascii
  from hashlib import sha256
  from . import der
  from .curves import orderlen
