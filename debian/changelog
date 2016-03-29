@@ -1,3 +1,9 @@
+python-ecdsa (0.13-3) UNRELEASED; urgency=medium
+
+  * Fixed VCS URL (https)
+
+ -- Ondřej Nový <novy@ondrej.org>  Tue, 29 Mar 2016 22:01:51 +0200
+
 python-ecdsa (0.13-2) unstable; urgency=medium
 
   * Upload to unstable.
