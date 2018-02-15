@@ -2,6 +2,7 @@ python-ecdsa (0.13-3) UNRELEASED; urgency=medium
 
   * Fixed VCS URL (https)
   * d/control: Set Vcs-* to salsa.debian.org
+  * d/copyright: Use https protocol in Format field
 
  -- Ondřej Nový <novy@ondrej.org>  Tue, 29 Mar 2016 22:01:51 +0200
 
