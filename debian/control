@@ -17,7 +17,6 @@ Vcs-Git: https://salsa.debian.org/python-team/modules/python-ecdsa.git
 Standards-Version: 3.9.6
 X-Python-Version: >= 2.6
 X-Python3-Version: >= 3.2
-XS-Testsuite: autopkgtest
 
 Package: python-ecdsa
 Architecture: all
