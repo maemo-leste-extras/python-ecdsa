@@ -10,6 +10,8 @@ python-ecdsa (0.13-3) UNRELEASED; urgency=medium
   [ Josue Ortega ]
   * New maintainer (Closes: #874388).
   * Bumps debhelper compat level from 9 to 11.
+  * Bumps Standards-Version to 4.1.3, Ondřej Nový made the necessary changes.
+  * Bumps X-Python-Version and X-Python3-Version version.
 
  -- Ondřej Nový <novy@ondrej.org>  Tue, 29 Mar 2016 22:01:51 +0200
 
