@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
 Uploaders: Josue Ortega <josue@debian.org>
 Build-Depends:
- debhelper (>= 9),
+ debhelper (>= 11),
  dh-python,
  python-all,
  python3-all,

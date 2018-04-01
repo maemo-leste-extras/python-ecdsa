@@ -9,6 +9,7 @@ python-ecdsa (0.13-3) UNRELEASED; urgency=medium
 
   [ Josue Ortega ]
   * New maintainer (Closes: #874388).
+  * Bumps debhelper compat level from 9 to 11.
 
  -- Ondřej Nový <novy@ondrej.org>  Tue, 29 Mar 2016 22:01:51 +0200
 
