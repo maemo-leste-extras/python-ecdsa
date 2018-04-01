@@ -15,6 +15,7 @@ License: Expat
 
 Files: debian/*
 Copyright: 2013-2014 Sebastian Ramacher <sramacher@debian.org>
+           2018 Josue Ortega <josue@debian.org>
 License: Expat
 Comment:
  The previous packaging was done by Bart Martens <bartm@knars.be>. He kindly
