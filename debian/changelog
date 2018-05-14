@@ -1,6 +1,7 @@
 python-ecdsa (0.13-4) UNRELEASED; urgency=medium
 
   * d/tests: Use AUTOPKGTEST_TMP instead of ADTTMP
+  * d/control: Remove ancient X-Python-Version field
 
  -- Ondřej Nový <onovy@debian.org>  Tue, 17 Apr 2018 13:20:23 +0200
 
