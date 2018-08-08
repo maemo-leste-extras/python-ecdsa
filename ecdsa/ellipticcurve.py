@@ -34,7 +34,7 @@
 
 from __future__ import division
 
-from six import print_
+from .six import print_
 from . import numbertheory
 
 class CurveFp( object ):
