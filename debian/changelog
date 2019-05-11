@@ -1,4 +1,4 @@
-python-ecdsa (0.13.2-1) UNRELEASED; urgency=medium
+python-ecdsa (0.13.2-1) experimental; urgency=medium
 
   [ Ondřej Nový ]
   * d/tests: Use AUTOPKGTEST_TMP instead of ADTTMP
@@ -12,7 +12,7 @@ python-ecdsa (0.13.2-1) UNRELEASED; urgency=medium
   * Bump Standards-Version to 4.3.0:
     - Add Rules-Requires-Root field.
 
- -- Josue Ortega <josue@debian.org>  Sat, 11 May 2019 16:47:39 -0600
+ -- Josue Ortega <josue@debian.org>  Sat, 11 May 2019 17:03:07 -0600
 
 python-ecdsa (0.13-3) unstable; urgency=medium
 
