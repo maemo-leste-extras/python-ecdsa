@@ -6,7 +6,8 @@ python-ecdsa (0.13.2-1) UNRELEASED; urgency=medium
   * Convert git repository from git-dpm to gbp layout
 
   [ Josue Ortega ]
-  * New upstream release (0.13.2)
+  * New upstream release (0.13.2):
+    -  Refresh debian/patches/system-six.patch.
 
  -- Josue Ortega <josue@debian.org>  Sat, 11 May 2019 16:47:39 -0600
 
