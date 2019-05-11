@@ -1,10 +1,14 @@
-python-ecdsa (0.13-4) UNRELEASED; urgency=medium
+python-ecdsa (0.13.2-1) UNRELEASED; urgency=medium
 
+  [ Ondřej Nový ]
   * d/tests: Use AUTOPKGTEST_TMP instead of ADTTMP
   * d/control: Remove ancient X-Python-Version field
   * Convert git repository from git-dpm to gbp layout
 
- -- Ondřej Nový <onovy@debian.org>  Tue, 17 Apr 2018 13:20:23 +0200
+  [ Josue Ortega ]
+  * New upstream release (0.13.2)
+
+ -- Josue Ortega <josue@debian.org>  Sat, 11 May 2019 16:47:39 -0600
 
 python-ecdsa (0.13-3) unstable; urgency=medium
 

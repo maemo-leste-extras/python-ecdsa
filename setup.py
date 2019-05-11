@@ -6,6 +6,8 @@ except ImportError:
     # but most users really don't require it
     from distutils.core import setup, Command
 import timeit
+import os
+import io
 
 import versioneer
 versioneer.versionfile_source = "ecdsa/_version.py"
@@ -74,10 +76,15 @@ class Speed(Test):
 
 commands["speed"] = Speed
 
+here = os.path.abspath(os.path.dirname(__file__))
+with io.open(os.path.join(here, "README.md"), encoding='utf-8') as f:
+    long_desc = f.read()
 
 setup(name="ecdsa",
       version=versioneer.get_version(),
       description="ECDSA cryptographic signature library (pure python)",
+      long_description=long_desc,
+      long_description_content_type='text/markdown',
       author="Brian Warner",
       author_email="warner-pyecdsa@lothar.com",
       url="http://github.com/warner/python-ecdsa",
@@ -93,5 +100,9 @@ setup(name="ecdsa",
           "Programming Language :: Python :: 3.2",
           "Programming Language :: Python :: 3.3",
           "Programming Language :: Python :: 3.4",
+          "Programming Language :: Python :: 3.5",
+          "Programming Language :: Python :: 3.6",
+          "Programming Language :: Python :: 3.7",
+          "Topic :: Security :: Cryptography"
       ],
 )
