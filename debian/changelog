@@ -8,6 +8,7 @@ python-ecdsa (0.13.2-1) UNRELEASED; urgency=medium
   [ Josue Ortega ]
   * New upstream release (0.13.2):
     -  Refresh debian/patches/system-six.patch.
+  * Bump compat level to use debhelper-compat (= 12)
 
  -- Josue Ortega <josue@debian.org>  Sat, 11 May 2019 16:47:39 -0600
 
