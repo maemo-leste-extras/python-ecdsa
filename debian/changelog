@@ -1,8 +1,8 @@
-python-ecdsa (0.13.2-2) UNRELEASED; urgency=medium
+python-ecdsa (0.13.2-2) unstable; urgency=medium
 
   * Upload to unstable.
 
- -- Josue Ortega <josue@debian.org>  Wed, 10 Jul 2019 19:16:27 -0600
+ -- Josue Ortega <josue@debian.org>  Wed, 10 Jul 2019 19:34:32 -0600
 
 python-ecdsa (0.13.2-1) experimental; urgency=medium
 
