@@ -4,7 +4,8 @@ python-ecdsa (0.13.2-3) UNRELEASED; urgency=medium
 
   [ Josue Ortega ]
   * Add salsa-ci configuration file.
-  * Remove python2 package
+  * Remove python2 package:
+    - debian/rules: Remove override_dh_auto_install section, no longer needed.
 
  -- Josue Ortega <josue@debian.org>  Mon, 12 Aug 2019 13:07:11 -0600
 
