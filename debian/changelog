@@ -1,4 +1,4 @@
-python-ecdsa (0.13.2-3) UNRELEASED; urgency=medium
+python-ecdsa (0.13.2-3) unstable; urgency=medium
   [ Ondřej Nový ]
   * Bump Standards-Version to 4.4.0.
 
@@ -10,7 +10,7 @@ python-ecdsa (0.13.2-3) UNRELEASED; urgency=medium
   * Remove obsolete python3-ecdsa.install.
   * Add patch to avoid module pollution with test files.
 
- -- Josue Ortega <josue@debian.org>  Mon, 12 Aug 2019 13:07:11 -0600
+ -- Josue Ortega <josue@debian.org>  Mon, 12 Aug 2019 14:36:53 -0600
 
 python-ecdsa (0.13.2-2) unstable; urgency=medium
 
