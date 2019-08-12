@@ -7,6 +7,7 @@ python-ecdsa (0.13.2-3) UNRELEASED; urgency=medium
   * Remove python2 package:
     - debian/rules: Remove override_dh_auto_install section, no longer needed.
   * debian/rules: Add PYBUILD_NAME variable
+  * Remove obsolete python3-ecdsa.install
 
  -- Josue Ortega <josue@debian.org>  Mon, 12 Aug 2019 13:07:11 -0600
 
