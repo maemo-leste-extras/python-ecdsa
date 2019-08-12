@@ -1,7 +1,0 @@
-#!/bin/bash
-set -e
-
-cd "$AUTOPKGTEST_TMP"
-for py in $(pyversions -vi) ; do
-  python$py -m ecdsa.test_pyecdsa ;
-done

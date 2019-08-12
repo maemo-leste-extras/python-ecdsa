@@ -4,6 +4,7 @@ python-ecdsa (0.13.2-3) UNRELEASED; urgency=medium
 
   [ Josue Ortega ]
   * Add salsa-ci configuration file.
+  * Remove python2 package
 
  -- Josue Ortega <josue@debian.org>  Mon, 12 Aug 2019 13:07:11 -0600
 
