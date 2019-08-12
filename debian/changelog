@@ -1,8 +1,11 @@
 python-ecdsa (0.13.2-3) UNRELEASED; urgency=medium
-
+  [ Ondřej Nový ]
   * Bump Standards-Version to 4.4.0.
 
- -- Ondřej Nový <onovy@debian.org>  Sat, 20 Jul 2019 00:10:22 +0200
+  [ Josue Ortega ]
+  * Add salsa-ci configuration file.
+
+ -- Josue Ortega <josue@debian.org>  Mon, 12 Aug 2019 13:07:11 -0600
 
 python-ecdsa (0.13.2-2) unstable; urgency=medium
 
