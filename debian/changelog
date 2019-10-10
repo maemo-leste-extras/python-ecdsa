@@ -3,6 +3,7 @@ python-ecdsa (0.13.3-1) unstable; urgency=medium
   * New upstream release (0.13.3):
     - Refresh debian/patches
   * Bump Standards-Version to 4.4.1. No changes required
+  * debian/control: Add python3-pytest as build dependency
 
  -- Josue Ortega <josue@debian.org>  Wed, 09 Oct 2019 19:00:24 -0600
 
