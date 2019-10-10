@@ -4,7 +4,7 @@ Last-Update: 2019-08-12
 
 --- a/ecdsa/test_pyecdsa.py
 +++ b/ecdsa/test_pyecdsa.py
-@@ -370,6 +370,10 @@
+@@ -539,6 +539,10 @@
          sig = sk.sign(data)
          self.assertTrue(vk.verify(sig, data))
  
@@ -15,7 +15,7 @@ Last-Update: 2019-08-12
      def test_to_openssl_nist192p(self):
          self.do_test_to_openssl(NIST192p)
      def test_to_openssl_nist224p(self):
-@@ -411,6 +415,10 @@
+@@ -580,6 +584,10 @@
          run_openssl("dgst %s -sign t/privkey.pem -out t/data.sig2 t/data.txt" % mdarg)
          run_openssl("dgst %s -verify t/pubkey.pem -signature t/data.sig2 t/data.txt" % mdarg)
  

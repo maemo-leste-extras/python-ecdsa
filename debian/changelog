@@ -1,6 +1,7 @@
 python-ecdsa (0.13.3-1) UNRELEASED; urgency=medium
 
-  * New upstream release (0.13.3)
+  * New upstream release (0.13.3):
+    - Refresh debian/patches
 
  -- Josue Ortega <josue@debian.org>  Wed, 09 Oct 2019 18:36:44 -0600
 

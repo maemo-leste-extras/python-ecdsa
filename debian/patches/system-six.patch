@@ -52,10 +52,10 @@ Patch-Name: system-six.patch
  class CurveFp( object ):
 --- a/ecdsa/keys.py
 +++ b/ecdsa/keys.py
-@@ -7,7 +7,7 @@
+@@ -8,7 +8,7 @@
  from .util import string_to_number, number_to_string, randrange
  from .util import sigencode_string, sigdecode_string
- from .util import oid_ecPublicKey, encoded_oid_ecPublicKey
+ from .util import oid_ecPublicKey, encoded_oid_ecPublicKey, MalformedSignature
 -from .six import PY3, b
 +from six import PY3, b
  from hashlib import sha1
@@ -87,14 +87,14 @@ Patch-Name: system-six.patch
      bin(0)
 --- a/ecdsa/test_pyecdsa.py
 +++ b/ecdsa/test_pyecdsa.py
-@@ -8,7 +8,7 @@
+@@ -11,7 +11,7 @@
  from binascii import hexlify, unhexlify
  from hashlib import sha1, sha256, sha512
  
 -from .six import b, print_, binary_type
 +from six import b, print_, binary_type
  from .keys import SigningKey, VerifyingKey
- from .keys import BadSignatureError
+ from .keys import BadSignatureError, MalformedPointError, BadDigestError
  from . import util
 --- a/ecdsa/util.py
 +++ b/ecdsa/util.py
