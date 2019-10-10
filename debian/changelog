@@ -1,10 +1,10 @@
-python-ecdsa (0.13.3-1) UNRELEASED; urgency=medium
+python-ecdsa (0.13.3-1) unstable; urgency=medium
 
   * New upstream release (0.13.3):
     - Refresh debian/patches
   * Bump Standards-Version to 4.4.1. No changes required
 
- -- Josue Ortega <josue@debian.org>  Wed, 09 Oct 2019 18:36:44 -0600
+ -- Josue Ortega <josue@debian.org>  Wed, 09 Oct 2019 19:00:24 -0600
 
 python-ecdsa (0.13.2-3) unstable; urgency=medium
   [ Ondřej Nový ]
