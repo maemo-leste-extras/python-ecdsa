@@ -1,3 +1,13 @@
+python-ecdsa (0.13-2+deb9u1) stretch-security; urgency=high
+
+  * Add patch for strict error checking in DER decoding integers.
+    Fix:
+     - CVE-2019-14853
+     - CVE-2019-14859
+  * Add python{3}-pytest as Build Dependency
+
+ -- Josue Ortega <josue@debian.org>  Mon, 21 Oct 2019 18:41:57 -0600
+
 python-ecdsa (0.13-2) unstable; urgency=medium
 
   * Upload to unstable.
