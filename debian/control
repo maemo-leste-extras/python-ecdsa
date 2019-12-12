@@ -9,9 +9,7 @@ Build-Depends:
  python-all,
  python3-all,
  python-six (>= 1.2),
- python-pytest,
  python3-six (>= 1.2),
- python3-pytest,
  openssl
 Homepage: https://github.com/warner/python-ecdsa
 Vcs-Browser: http://anonscm.debian.org/viewvc/python-modules/packages/python-ecdsa/trunk/
