@@ -5,6 +5,7 @@ python-ecdsa (0.14.1-1) UNRELEASED; urgency=medium
     - Remove system-six.patch. Patch is no longer needed
   * debian/copyright: Remove ecdsa/six.py paragraph. File is no longer
     included in source
+  * debian/control: Add python3-setuptools as build dependency
 
  -- Josue Ortega <josue@debian.org>  Mon, 30 Dec 2019 16:10:27 -0600
 
