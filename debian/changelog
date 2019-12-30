@@ -5,8 +5,10 @@ python-ecdsa (0.14.1-1) unstable; urgency=medium
     - Remove system-six.patch. Patch is no longer needed
   * debian/copyright: Remove ecdsa/six.py paragraph. File is no longer
     included in source
-  * debian/control: Add {python3-setuptools, python3-hypothesis] as build
+  * debian/control: Add {python3-setuptools, python3-hypothesis} as build
     dependencies
+  * debian/tests/control: Add python3-pytest and python3-hypothesis as test
+    dependency
 
  -- Josue Ortega <josue@debian.org>  Mon, 30 Dec 2019 17:06:09 -0600
 
