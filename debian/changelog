@@ -1,3 +1,9 @@
+python-ecdsa (0.14.1-1) UNRELEASED; urgency=medium
+
+  * New upstream release (0.14.1)
+
+ -- Josue Ortega <josue@debian.org>  Mon, 30 Dec 2019 16:10:27 -0600
+
 python-ecdsa (0.13.3-1) unstable; urgency=medium
 
   * New upstream release (0.13.3):
