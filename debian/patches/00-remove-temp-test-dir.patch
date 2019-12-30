@@ -6,12 +6,11 @@ Last-Update: 2019-12-30
 
 --- a/src/ecdsa/test_pyecdsa.py
 +++ b/src/ecdsa/test_pyecdsa.py
-@@ -53,6 +53,12 @@
+@@ -53,6 +53,11 @@
  
  
  class ECDSA(unittest.TestCase):
 +
-+    @override
 +    def tearDown(self):
 +        if os.path.isdir("t"):
 +            shutil.rmtree("t")
@@ -19,11 +18,10 @@ Last-Update: 2019-12-30
      def test_basic(self):
          priv = SigningKey.generate()
          pub = priv.get_verifying_key()
-@@ -952,6 +958,11 @@
+@@ -952,6 +957,10 @@
  
  
  class DER(unittest.TestCase):
-+    @override
 +    def tearDown(self):
 +        if os.path.isdir("t"):
 +            shutil.rmtree("t")
@@ -31,12 +29,11 @@ Last-Update: 2019-12-30
      def test_integer(self):
          self.assertEqual(der.encode_integer(0), b("\x02\x01\x00"))
          self.assertEqual(der.encode_integer(1), b("\x02\x01\x01"))
-@@ -1013,6 +1024,12 @@
+@@ -1013,6 +1022,11 @@
  
  
  class Util(unittest.TestCase):
 +
-+    @override
 +    def tearDown(self):
 +        if os.path.isdir("t"):
 +            shutil.rmtree("t")
@@ -44,22 +41,20 @@ Last-Update: 2019-12-30
      def test_trytryagain(self):
          tta = util.randrange_from_seed__trytryagain
          for i in range(1000):
-@@ -1053,6 +1070,10 @@
+@@ -1053,6 +1067,9 @@
  
  
  class RFC6979(unittest.TestCase):
-+    @override
 +    def tearDown(self):
 +        if os.path.isdir("t"):
 +            shutil.rmtree("t")
      # https://tools.ietf.org/html/rfc6979#appendix-A.1
      def _do(self, generator, secexp, hsh, hash_func, expected):
          actual = rfc6979.generate_k(generator.order(), secexp, hash_func, hsh)
-@@ -1190,6 +1211,11 @@
+@@ -1190,6 +1207,10 @@
              expected=int("16200813020EC986863BEDFC1B121F605C1215645018AEA1A7B215A564DE9EB1B38A67AA1128B80CE391C4FB71187654AAA3431027BFC7F395766CA988C964DC56D", 16))
  
  class ECDH(unittest.TestCase):
-+    @override
 +    def tearDown(self):
 +        if os.path.isdir("t"):
 +            shutil.rmtree("t")
