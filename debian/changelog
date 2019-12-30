@@ -1,6 +1,7 @@
 python-ecdsa (0.14.1-1) UNRELEASED; urgency=medium
 
-  * New upstream release (0.14.1)
+  * New upstream release (0.14.1):
+    - Update 00-remove-temp-test-dir.patch
 
  -- Josue Ortega <josue@debian.org>  Mon, 30 Dec 2019 16:10:27 -0600
 

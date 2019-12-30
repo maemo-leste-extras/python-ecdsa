@@ -1,28 +1,69 @@
-Description: Remove temporary directory for tests to avoid dirty tree module at installation.
+Description: Add override teardDown() function to cleanup directory after tests. This will avoid
+ dirty tree module at installation time
 Author: Josue Ortega <josue@debian.org>
-Last-Update: 2019-08-12
+Last-Update: 2019-12-30
 
---- a/ecdsa/test_pyecdsa.py
-+++ b/ecdsa/test_pyecdsa.py
-@@ -539,6 +539,10 @@
-         sig = sk.sign(data)
-         self.assertTrue(vk.verify(sig, data))
+
+--- a/src/ecdsa/test_pyecdsa.py
++++ b/src/ecdsa/test_pyecdsa.py
+@@ -53,6 +53,12 @@
  
-+        # Remove temporary directory 't'
+ 
+ class ECDSA(unittest.TestCase):
++
++    @override
++    def tearDown(self):
 +        if os.path.isdir("t"):
 +            shutil.rmtree("t")
 +
-     def test_to_openssl_nist192p(self):
-         self.do_test_to_openssl(NIST192p)
-     def test_to_openssl_nist224p(self):
-@@ -580,6 +584,10 @@
-         run_openssl("dgst %s -sign t/privkey.pem -out t/data.sig2 t/data.txt" % mdarg)
-         run_openssl("dgst %s -verify t/pubkey.pem -signature t/data.sig2 t/data.txt" % mdarg)
+     def test_basic(self):
+         priv = SigningKey.generate()
+         pub = priv.get_verifying_key()
+@@ -952,6 +958,11 @@
  
-+        # Remove temporary directory 't'
-+        if os.path.isdir("t"):
-+            shutil.rmtree("t")
-+
+ 
  class DER(unittest.TestCase):
-     def test_oids(self):
-         oid_ecPublicKey = der.encode_oid(1, 2, 840, 10045, 2, 1)
++    @override
++    def tearDown(self):
++        if os.path.isdir("t"):
++            shutil.rmtree("t")
++
+     def test_integer(self):
+         self.assertEqual(der.encode_integer(0), b("\x02\x01\x00"))
+         self.assertEqual(der.encode_integer(1), b("\x02\x01\x01"))
+@@ -1013,6 +1024,12 @@
+ 
+ 
+ class Util(unittest.TestCase):
++
++    @override
++    def tearDown(self):
++        if os.path.isdir("t"):
++            shutil.rmtree("t")
++
+     def test_trytryagain(self):
+         tta = util.randrange_from_seed__trytryagain
+         for i in range(1000):
+@@ -1053,6 +1070,10 @@
+ 
+ 
+ class RFC6979(unittest.TestCase):
++    @override
++    def tearDown(self):
++        if os.path.isdir("t"):
++            shutil.rmtree("t")
+     # https://tools.ietf.org/html/rfc6979#appendix-A.1
+     def _do(self, generator, secexp, hsh, hash_func, expected):
+         actual = rfc6979.generate_k(generator.order(), secexp, hash_func, hsh)
+@@ -1190,6 +1211,11 @@
+             expected=int("16200813020EC986863BEDFC1B121F605C1215645018AEA1A7B215A564DE9EB1B38A67AA1128B80CE391C4FB71187654AAA3431027BFC7F395766CA988C964DC56D", 16))
+ 
+ class ECDH(unittest.TestCase):
++    @override
++    def tearDown(self):
++        if os.path.isdir("t"):
++            shutil.rmtree("t")
++
+     def _do(self, curve, generator, dA, x_qA, y_qA, dB, x_qB, y_qB, x_Z, y_Z):
+         qA = dA * generator
+         qB = dB * generator

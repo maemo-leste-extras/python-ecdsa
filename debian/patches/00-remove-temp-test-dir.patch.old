@@ -1,0 +1,28 @@
+Description: Remove temporary directory for tests to avoid dirty tree module at installation.
+Author: Josue Ortega <josue@debian.org>
+Last-Update: 2019-08-12
+
+--- a/src/ecdsa/test_pyecdsa.py
++++ b/src/ecdsa/test_pyecdsa.py
+@@ -539,6 +539,10 @@
+         sig = sk.sign(data)
+         self.assertTrue(vk.verify(sig, data))
+ 
++        # Remove temporary directory 't'
++        if os.path.isdir("t"):
++            shutil.rmtree("t")
++
+     def test_to_openssl_nist192p(self):
+         self.do_test_to_openssl(NIST192p)
+     def test_to_openssl_nist224p(self):
+@@ -580,6 +584,10 @@
+         run_openssl("dgst %s -sign t/privkey.pem -out t/data.sig2 t/data.txt" % mdarg)
+         run_openssl("dgst %s -verify t/pubkey.pem -signature t/data.sig2 t/data.txt" % mdarg)
+ 
++        # Remove temporary directory 't'
++        if os.path.isdir("t"):
++            shutil.rmtree("t")
++
+ class DER(unittest.TestCase):
+     def test_oids(self):
+         oid_ecPublicKey = der.encode_oid(1, 2, 840, 10045, 2, 1)
