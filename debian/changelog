@@ -1,13 +1,14 @@
-python-ecdsa (0.14.1-1) UNRELEASED; urgency=medium
+python-ecdsa (0.14.1-1) unstable; urgency=medium
 
   * New upstream release (0.14.1):
     - Update 00-remove-temp-test-dir.patch
     - Remove system-six.patch. Patch is no longer needed
   * debian/copyright: Remove ecdsa/six.py paragraph. File is no longer
     included in source
-  * debian/control: Add python3-setuptools as build dependency
+  * debian/control: Add {python3-setuptools, python3-hypothesis] as build
+    dependencies
 
- -- Josue Ortega <josue@debian.org>  Mon, 30 Dec 2019 16:10:27 -0600
+ -- Josue Ortega <josue@debian.org>  Mon, 30 Dec 2019 16:52:40 -0600
 
 python-ecdsa (0.13.3-1) unstable; urgency=medium
 
