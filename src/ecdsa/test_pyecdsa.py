@@ -10,7 +10,12 @@ import shutil
 import subprocess
 import pytest
 from binascii import hexlify, unhexlify
-from hashlib import sha1, sha256, sha512
+from hashlib import sha1, sha256, sha384, sha512
+import hashlib
+from functools import partial
+
+from hypothesis import given
+import hypothesis.strategies as st
 
 from six import b, print_, binary_type
 from .keys import SigningKey, VerifyingKey
@@ -47,9 +52,6 @@ def run_openssl(cmd):
         raise SubprocessError("cmd '%s %s' failed: rc=%s, stdout/err was %s" %
                               (OPENSSL, cmd, p.returncode, stdout))
     return stdout.decode()
-
-
-BENCH = False
 
 
 class ECDSA(unittest.TestCase):
@@ -100,8 +102,6 @@ class ECDSA(unittest.TestCase):
         self.assertEqual(len(pub.to_string()), default.verifying_key_length)
         sig = priv.sign(b("data"))
         self.assertEqual(len(sig), default.signature_length)
-        if BENCH:
-            print_()
         for curve in (NIST192p, NIST224p, NIST256p, NIST384p, NIST521p,
                       BRAINPOOLP160r1, BRAINPOOLP192r1, BRAINPOOLP224r1,
                       BRAINPOOLP256r1, BRAINPOOLP320r1, BRAINPOOLP384r1,
@@ -118,13 +118,6 @@ class ECDSA(unittest.TestCase):
             sig = priv.sign(b("data"))
             sign_time = time.time() - start
             self.assertEqual(len(sig), curve.signature_length)
-            if BENCH:
-                start = time.time()
-                pub1.verify(sig, b("data"))
-                verify_time = time.time() - start
-                print_("%s: siglen=%d, keygen=%0.3fs, sign=%0.3f, verify=%0.3f" \
-                       % (curve.name, curve.signature_length,
-                          keygen_time, sign_time, verify_time))
 
     def test_serialize(self):
         seed = b("secret")
@@ -173,10 +166,6 @@ class ECDSA(unittest.TestCase):
                          priv2.privkey.secret_multiplier)
         self.assertEqual(priv1.privkey.public_key.generator,
                          priv2.privkey.public_key.generator)
-
-    def failIfPrivkeysEqual(self, priv1, priv2):
-        self.failIfEqual(priv1.privkey.secret_multiplier,
-                         priv2.privkey.secret_multiplier)
 
     def test_privkey_creation(self):
         s = b("all the entropy in the entire world, compressed into one line")
@@ -634,31 +623,10 @@ class ECDSA(unittest.TestCase):
             VerifyingKey.from_string(b('\x00'))
 
     def test_not_lying_on_curve(self):
-        enc = number_to_string(NIST192p.order, NIST192p.order+1)
+        enc = number_to_string(NIST192p.curve.p(), NIST192p.curve.p()+1)
 
         with self.assertRaises(MalformedPointError):
             VerifyingKey.from_string(b('\x02') + enc)
-
-    def test_decoding_with_malformed_uncompressed(self):
-        enc = b('\x0c\xe0\x1d\xe0d\x1c\x8eS\x8a\xc0\x9eK\xa8x !\xd5\xc2\xc3'
-                '\xfd\xc8\xa0c\xff\xfb\x02\xb9\xc4\x84)\x1a\x0f\x8b\x87\xa4'
-                'z\x8a#\xb5\x97\xecO\xb6\xa0HQ\x89*')
-
-        with self.assertRaises(MalformedPointError):
-            VerifyingKey.from_string(b('\x02') + enc)
-
-    def test_decoding_with_point_not_on_curve(self):
-        enc = b('\x0c\xe0\x1d\xe0d\x1c\x8eS\x8a\xc0\x9eK\xa8x !\xd5\xc2\xc3'
-                '\xfd\xc8\xa0c\xff\xfb\x02\xb9\xc4\x84)\x1a\x0f\x8b\x87\xa4'
-                'z\x8a#\xb5\x97\xecO\xb6\xa0HQ\x89*')
-
-        with self.assertRaises(MalformedPointError):
-            VerifyingKey.from_string(enc[:47] + b('\x00'))
-
-    def test_decoding_with_point_at_infinity(self):
-        # decoding it is unsupported, as it's not necessary to encode it
-        with self.assertRaises(MalformedPointError):
-            VerifyingKey.from_string(b('\x00'))
 
     def test_from_string_with_invalid_curve_too_short_ver_key_len(self):
         # both verifying_key_length and baselen are calculated internally
@@ -742,15 +710,15 @@ class OpenSSL(unittest.TestCase):
                                    run_openssl("ecparam -list_curves")
                                    .split('\n'))
 
-    def get_openssl_messagedigest_arg(self):
+    def get_openssl_messagedigest_arg(self, hash_name):
         v = run_openssl("version")
         # e.g. "OpenSSL 1.0.0 29 Mar 2010", or "OpenSSL 1.0.0a 1 Jun 2010",
         # or "OpenSSL 0.9.8o 01 Jun 2010"
         vs = v.split()[1].split(".")
-        if vs >= ["1", "0", "0"]:
-            return "-SHA1"
-        else:
-            return "-ecdsa-with-SHA1"
+        if vs >= ["1", "0", "0"]:  # pragma: no cover
+            return "-{0}".format(hash_name)
+        else:  # pragma: no cover
+            return "-ecdsa-with-{0}".format(hash_name)
 
     # sk: 1:OpenSSL->python  2:python->OpenSSL
     # vk: 3:OpenSSL->python  4:python->OpenSSL
@@ -761,6 +729,11 @@ class OpenSSL(unittest.TestCase):
     def test_from_openssl_nist192p(self):
         return self.do_test_from_openssl(NIST192p)
 
+    @pytest.mark.skipif("prime192v1" not in OPENSSL_SUPPORTED_CURVES,
+                        reason="system openssl does not support prime192v1")
+    def test_from_openssl_nist192p_sha256(self):
+        return self.do_test_from_openssl(NIST192p, "SHA256")
+
     @pytest.mark.skipif("secp224r1" not in OPENSSL_SUPPORTED_CURVES,
                         reason="system openssl does not support secp224r1")
     def test_from_openssl_nist224p(self):
@@ -770,6 +743,16 @@ class OpenSSL(unittest.TestCase):
                         reason="system openssl does not support prime256v1")
     def test_from_openssl_nist256p(self):
         return self.do_test_from_openssl(NIST256p)
+
+    @pytest.mark.skipif("prime256v1" not in OPENSSL_SUPPORTED_CURVES,
+                        reason="system openssl does not support prime256v1")
+    def test_from_openssl_nist256p_sha384(self):
+        return self.do_test_from_openssl(NIST256p, "SHA384")
+
+    @pytest.mark.skipif("prime256v1" not in OPENSSL_SUPPORTED_CURVES,
+                        reason="system openssl does not support prime256v1")
+    def test_from_openssl_nist256p_sha512(self):
+        return self.do_test_from_openssl(NIST256p, "SHA512")
 
     @pytest.mark.skipif("secp384r1" not in OPENSSL_SUPPORTED_CURVES,
                         reason="system openssl does not support secp384r1")
@@ -821,13 +804,13 @@ class OpenSSL(unittest.TestCase):
     def test_from_openssl_brainpoolp512r1(self):
         return self.do_test_from_openssl(BRAINPOOLP512r1)
 
-    def do_test_from_openssl(self, curve):
+    def do_test_from_openssl(self, curve, hash_name="SHA1"):
         curvename = curve.openssl_name
         assert curvename
         # OpenSSL: create sk, vk, sign.
         # Python: read vk(3), checksig(5), read sk(1), sign, check
-        mdarg = self.get_openssl_messagedigest_arg()
-        if os.path.isdir("t"):
+        mdarg = self.get_openssl_messagedigest_arg(hash_name)
+        if os.path.isdir("t"):  # pragma: no cover
             shutil.rmtree("t")
         os.mkdir("t")
         run_openssl("ecparam -name %s -genkey -out t/privkey.pem" % curvename)
@@ -843,18 +826,29 @@ class OpenSSL(unittest.TestCase):
         with open("t/data.sig", "rb") as e:
           sig_der = e.read()
         self.assertTrue(vk.verify(sig_der, data,  # 5
-                                  hashfunc=sha1, sigdecode=sigdecode_der))
+                                  hashfunc=partial(hashlib.new, hash_name),
+                                  sigdecode=sigdecode_der))
 
         with open("t/privkey.pem") as e:
           fp = e.read()
         sk = SigningKey.from_pem(fp)  # 1
-        sig = sk.sign(data)
-        self.assertTrue(vk.verify(sig, data))
+        sig = sk.sign(
+                data,
+                hashfunc=partial(hashlib.new, hash_name),
+                )
+        self.assertTrue(vk.verify(sig,
+                                  data,
+                                  hashfunc=partial(hashlib.new, hash_name)))
 
     @pytest.mark.skipif("prime192v1" not in OPENSSL_SUPPORTED_CURVES,
                         reason="system openssl does not support prime192v1")
     def test_to_openssl_nist192p(self):
         self.do_test_to_openssl(NIST192p)
+
+    @pytest.mark.skipif("prime192v1" not in OPENSSL_SUPPORTED_CURVES,
+                        reason="system openssl does not support prime192v1")
+    def test_to_openssl_nist192p_sha256(self):
+        self.do_test_to_openssl(NIST192p, "SHA256")
 
     @pytest.mark.skipif("secp224r1" not in OPENSSL_SUPPORTED_CURVES,
                         reason="system openssl does not support secp224r1")
@@ -865,6 +859,16 @@ class OpenSSL(unittest.TestCase):
                         reason="system openssl does not support prime256v1")
     def test_to_openssl_nist256p(self):
         self.do_test_to_openssl(NIST256p)
+
+    @pytest.mark.skipif("prime256v1" not in OPENSSL_SUPPORTED_CURVES,
+                        reason="system openssl does not support prime256v1")
+    def test_to_openssl_nist256p_sha384(self):
+        self.do_test_to_openssl(NIST256p, "SHA384")
+
+    @pytest.mark.skipif("prime256v1" not in OPENSSL_SUPPORTED_CURVES,
+                        reason="system openssl does not support prime256v1")
+    def test_to_openssl_nist256p_sha512(self):
+        self.do_test_to_openssl(NIST256p, "SHA512")
 
     @pytest.mark.skipif("secp384r1" not in OPENSSL_SUPPORTED_CURVES,
                         reason="system openssl does not support secp384r1")
@@ -916,13 +920,13 @@ class OpenSSL(unittest.TestCase):
     def test_to_openssl_brainpoolp512r1(self):
         self.do_test_to_openssl(BRAINPOOLP512r1)
 
-    def do_test_to_openssl(self, curve):
+    def do_test_to_openssl(self, curve, hash_name="SHA1"):
         curvename = curve.openssl_name
         assert curvename
         # Python: create sk, vk, sign.
         # OpenSSL: read vk(4), checksig(6), read sk(2), sign, check
-        mdarg = self.get_openssl_messagedigest_arg()
-        if os.path.isdir("t"):
+        mdarg = self.get_openssl_messagedigest_arg(hash_name)
+        if os.path.isdir("t"):  # pragma: no cover
             shutil.rmtree("t")
         os.mkdir("t")
         sk = SigningKey.generate(curve=curve)
@@ -932,7 +936,8 @@ class OpenSSL(unittest.TestCase):
           e.write(vk.to_der())  # 4
         with open("t/pubkey.pem", "wb") as e:
           e.write(vk.to_pem())  # 4
-        sig_der = sk.sign(data, hashfunc=sha1, sigencode=sigencode_der)
+        sig_der = sk.sign(data, hashfunc=partial(hashlib.new, hash_name),
+                          sigencode=sigencode_der)
 
         with open("t/data.sig", "wb") as e:
           e.write(sig_der)  # 6
@@ -1025,19 +1030,19 @@ class Util(unittest.TestCase):
         self.assertEqual(("%x" % (tta("seed", NIST224p.order))).encode(),
                          b("6fa59d73bf0446ae8743cf748fc5ac11d5585a90356417e97155c3bc"))
 
-    def test_randrange(self):
+    @given(st.integers(min_value=0, max_value=10**200))
+    def test_randrange(self, i):
         # util.randrange does not provide long-term stability: we might
         # change the algorithm in the future.
-        for i in range(1000):
-            entropy = util.PRNG("seed-%d" % i)
-            for order in (2**8 - 2, 2**8 - 1, 2**8,
-                          2**16 - 1, 2**16 + 1,
-                          ):
-                # that oddball 2**16+1 takes half our runtime
-                n = util.randrange(order, entropy=entropy)
-                self.assertTrue(1 <= n < order, (1, n, order))
+        entropy = util.PRNG("seed-%d" % i)
+        for order in (2**8 - 2, 2**8 - 1, 2**8,
+                      2**16 - 1, 2**16 + 1,
+                      ):
+            # that oddball 2**16+1 takes half our runtime
+            n = util.randrange(order, entropy=entropy)
+            self.assertTrue(1 <= n < order, (1, n, order))
 
-    def OFF_test_prove_uniformity(self):
+    def OFF_test_prove_uniformity(self):  # pragma: no cover
         order = 2**8 - 2
         counts = dict([(i, 0) for i in range(1, order)])
         assert 0 not in counts
@@ -1188,6 +1193,7 @@ class RFC6979(unittest.TestCase):
             hsh=sha512(b("test")).digest(),
             hash_func=sha512,
             expected=int("16200813020EC986863BEDFC1B121F605C1215645018AEA1A7B215A564DE9EB1B38A67AA1128B80CE391C4FB71187654AAA3431027BFC7F395766CA988C964DC56D", 16))
+
 
 class ECDH(unittest.TestCase):
     def _do(self, curve, generator, dA, x_qA, y_qA, dB, x_qB, y_qB, x_Z, y_Z):
@@ -1374,119 +1380,66 @@ class RFC7027(ECDH):
                     "2BE6A26680A2", 16))
 
 
-class ECDH(unittest.TestCase):
-    def _do(self, curve, generator, dA, x_qA, y_qA, dB, x_qB, y_qB, x_Z, y_Z):
-        qA = dA * generator
-        qB = dB * generator
-        Z = dA * qB
-        self.assertEqual(Point(curve, x_qA, y_qA), qA)
-        self.assertEqual(Point(curve, x_qB, y_qB), qB)
-        self.assertTrue((dA * qB) == (dA * dB * generator) == (dB * dA * generator) == (dB * qA))
-        self.assertEqual(Point(curve, x_Z, y_Z), Z)
+# https://tools.ietf.org/html/rfc4754#page-5
+@pytest.mark.parametrize("w, gwx, gwy, k, msg, md, r, s, curve",
+    [pytest.param(
+        "DC51D3866A15BACDE33D96F992FCA99DA7E6EF0934E7097559C27F1614C88A7F",
+        "2442A5CC0ECD015FA3CA31DC8E2BBC70BF42D60CBCA20085E0822CB04235E970",
+        "6FC98BD7E50211A4A27102FA3549DF79EBCB4BF246B80945CDDFE7D509BBFD7D",
+        "9E56F509196784D963D1C0A401510EE7ADA3DCC5DEE04B154BF61AF1D5A6DECE",
+        b"abc",
+        sha256,
+        "CB28E0999B9C7715FD0A80D8E47A77079716CBBF917DD72E97566EA1C066957C",
+        "86FA3BB4E26CAD5BF90B7F81899256CE7594BB1EA0C89212748BFF3B3D5B0315",
+        NIST256p,
+        id="ECDSA-256"),
+     pytest.param(
+        "0BEB646634BA87735D77AE4809A0EBEA865535DE4C1E1DCB692E84708E81A5AF"
+        "62E528C38B2A81B35309668D73524D9F",
+        "96281BF8DD5E0525CA049C048D345D3082968D10FEDF5C5ACA0C64E6465A97EA"
+        "5CE10C9DFEC21797415710721F437922",
+        "447688BA94708EB6E2E4D59F6AB6D7EDFF9301D249FE49C33096655F5D502FAD"
+        "3D383B91C5E7EDAA2B714CC99D5743CA",
+        "B4B74E44D71A13D568003D7489908D564C7761E229C58CBFA18950096EB7463B"
+        "854D7FA992F934D927376285E63414FA",
+        b'abc',
+        sha384,
+        "FB017B914E29149432D8BAC29A514640B46F53DDAB2C69948084E2930F1C8F7E"
+        "08E07C9C63F2D21A07DCB56A6AF56EB3",
+        "B263A1305E057F984D38726A1B46874109F417BCA112674C528262A40A629AF1"
+        "CBB9F516CE0FA7D2FF630863A00E8B9F",
+        NIST384p,
+        id="ECDSA-384"),
+     pytest.param(
+        "0065FDA3409451DCAB0A0EAD45495112A3D813C17BFD34BDF8C1209D7DF58491"
+        "20597779060A7FF9D704ADF78B570FFAD6F062E95C7E0C5D5481C5B153B48B37"
+        "5FA1",
+        "0151518F1AF0F563517EDD5485190DF95A4BF57B5CBA4CF2A9A3F6474725A35F"
+        "7AFE0A6DDEB8BEDBCD6A197E592D40188901CECD650699C9B5E456AEA5ADD190"
+        "52A8",
+        "006F3B142EA1BFFF7E2837AD44C9E4FF6D2D34C73184BBAD90026DD5E6E85317"
+        "D9DF45CAD7803C6C20035B2F3FF63AFF4E1BA64D1C077577DA3F4286C58F0AEA"
+        "E643",
+        "00C1C2B305419F5A41344D7E4359933D734096F556197A9B244342B8B62F46F9"
+        "373778F9DE6B6497B1EF825FF24F42F9B4A4BD7382CFC3378A540B1B7F0C1B95"
+        "6C2F",
+        b'abc',
+        sha512,
+        "0154FD3836AF92D0DCA57DD5341D3053988534FDE8318FC6AAAAB68E2E6F4339"
+        "B19F2F281A7E0B22C269D93CF8794A9278880ED7DBB8D9362CAEACEE54432055"
+        "2251",
+        "017705A7030290D1CEB605A9A1BB03FF9CDD521E87A696EC926C8C10C8362DF4"
+        "975367101F67D1CF9BCCBF2F3D239534FA509E70AAC851AE01AAC68D62F86647"
+        "2660",
+        NIST521p,
+        id="ECDSA-521")
+        ])
+def test_RFC4754_vectors(w, gwx, gwy, k, msg, md, r, s, curve):
+    sk = SigningKey.from_string(unhexlify(w), curve)
+    vk = VerifyingKey.from_string(unhexlify(gwx + gwy), curve)
+    assert sk.verifying_key == vk
+    sig = sk.sign(msg, hashfunc=md, sigencode=sigencode_strings, k=int(k, 16))
 
+    assert sig == (unhexlify(r), unhexlify(s))
 
-class RFC6932(ECDH):
-    # https://tools.ietf.org/html/rfc6932#appendix-A.1
-
-    def test_brainpoolP224r1(self):
-        self._do(
-            curve=curve_brainpoolp224r1,
-            generator=BRAINPOOLP224r1.generator,
-            dA=int("7C4B7A2C8A4BAD1FBB7D79CC0955DB7C6A4660CA64CC4778159B495E", 16),
-            x_qA=int("B104A67A6F6E85E14EC1825E1539E8ECDBBF584922367DD88C6BDCF2", 16),
-            y_qA=int("46D782E7FDB5F60CD8404301AC5949C58EDB26BC68BA07695B750A94", 16),
-            dB=int("63976D4AAE6CD0F6DD18DEFEF55D96569D0507C03E74D6486FFA28FB", 16),
-            x_qB=int("2A97089A9296147B71B21A4B574E1278245B536F14D8C2B9D07A874E", 16),
-            y_qB=int("9B900D7C77A709A797276B8CA1BA61BB95B546FC29F862E44D59D25B", 16),
-            x_Z=int("312DFD98783F9FB77B9704945A73BEB6DCCBE3B65D0F967DCAB574EB", 16),
-            y_Z=int("6F800811D64114B1C48C621AB3357CF93F496E4238696A2A012B3C98", 16))
-
-    def test_brainpoolP256r1(self):
-        self._do(
-            curve=curve_brainpoolp256r1,
-            generator=BRAINPOOLP256r1.generator,
-            dA=int("041EB8B1E2BC681BCE8E39963B2E9FC415B05283313DD1A8BCC055F11AE49699", 16),
-            x_qA=int("78028496B5ECAAB3C8B6C12E45DB1E02C9E4D26B4113BC4F015F60C5CCC0D206", 16),
-            y_qA=int("A2AE1762A3831C1D20F03F8D1E3C0C39AFE6F09B4D44BBE80CD100987B05F92B", 16),
-            dB=int("06F5240EACDB9837BC96D48274C8AA834B6C87BA9CC3EEDD81F99A16B8D804D3", 16),
-            x_qB=int("8E07E219BA588916C5B06AA30A2F464C2F2ACFC1610A3BE2FB240B635341F0DB", 16),
-            y_qB=int("148EA1D7D1E7E54B9555B6C9AC90629C18B63BEE5D7AA6949EBBF47B24FDE40D", 16),
-            x_Z=int("05E940915549E9F6A4A75693716E37466ABA79B4BF2919877A16DD2CC2E23708", 16),
-            y_Z=int("6BC23B6702BC5A019438CEEA107DAAD8B94232FFBBC350F3B137628FE6FD134C", 16))
-
-    def test_brainpoolP384r1(self):
-        self._do(
-            curve=curve_brainpoolp384r1,
-            generator=BRAINPOOLP384r1.generator,
-            dA=int("014EC0755B78594BA47FB0A56F6173045B4331E74BA1A6F47322E70D79D828D97E095884CA72B73FDABD5910DF0FA76A", 16),
-            x_qA=int("45CB26E4384DAF6FB776885307B9A38B7AD1B5C692E0C32F0125332778F3B8D3F50CA358099B30DEB5EE69A95C058B4E", 16),
-            y_qA=int("8173A1C54AFFA7E781D0E1E1D12C0DC2B74F4DF58E4A4E3AF7026C5D32DC530A2CD89C859BB4B4B768497F49AB8CC859", 16),
-            dB=int("6B461CB79BD0EA519A87D6828815D8CE7CD9B3CAA0B5A8262CBCD550A015C90095B976F3529957506E1224A861711D54", 16),
-            x_qB=int("01BF92A92EE4BE8DED1A911125C209B03F99E3161CFCC986DC7711383FC30AF9CE28CA3386D59E2C8D72CE1E7B4666E8", 16),
-            y_qB=int("3289C4A3A4FEE035E39BDB885D509D224A142FF9FBCC5CFE5CCBB30268EE47487ED8044858D31D848F7A95C635A347AC", 16),
-            x_Z=int("04CC4FF3DCCCB07AF24E0ACC529955B36D7C807772B92FCBE48F3AFE9A2F370A1F98D3FA73FD0C0747C632E12F1423EC", 16),
-            y_Z=int("7F465F90BD69AFB8F828A214EB9716D66ABC59F17AF7C75EE7F1DE22AB5D05085F5A01A9382D05BF72D96698FE3FF64E", 16))
-
-    def test_brainpoolP512r1(self):
-        self._do(
-            curve=curve_brainpoolp512r1,
-            generator=BRAINPOOLP512r1.generator,
-            dA=int("636B6BE0482A6C1C41AA7AE7B245E983392DB94CECEA2660A379CFE159559E357581825391175FC195D28BAC0CF03A7841A383B95C262B983782874CCE6FE333", 16),
-            x_qA=int("0562E68B9AF7CBFD5565C6B16883B777FF11C199161ECC427A39D17EC2166499389571D6A994977C56AD8252658BA8A1B72AE42F4FB7532151AFC3EF0971CCDA", 16),
-            y_qA=int("A7CA2D8191E21776A89860AFBC1F582FAA308D551C1DC6133AF9F9C3CAD59998D70079548140B90B1F311AFB378AA81F51B275B2BE6B7DEE978EFC7343EA642E", 16),
-            dB=int("0AF4E7F6D52EDD52907BB8DBAB3992A0BB696EC10DF11892FF205B66D381ECE72314E6A6EA079CEA06961DBA5AE6422EF2E9EE803A1F236FB96A1799B86E5C8B", 16),
-            x_qB=int("5A7954E32663DFF11AE24712D87419F26B708AC2B92877D6BFEE2BFC43714D89BBDB6D24D807BBD3AEB7F0C325F862E8BADE4F74636B97EAACE739E11720D323", 16),
-            y_qB=int("96D14621A9283A1BED84DE8DD64836B2C0758B11441179DC0C54C0D49A47C03807D171DD544B72CAAEF7B7CE01C7753E2CAD1A861ECA55A71954EE1BA35E04BE", 16),
-            x_Z=int("1EE8321A4BBF93B9CF8921AB209850EC9B7066D1984EF08C2BB723236208AC8F1A483E79461A00E0D5F6921CE9D360502F85C812BEDEE23AC5B210E5811B191E", 16),
-            y_Z=int("2632095B7B936174B41FD2FAF369B1D18DCADEED7E410A7E251F0831097C50D02CFED02607B6A2D5ADB4C0006008562208631875B58B54ECDA5A4F9FE9EAABA6", 16))
-
-
-class RFC7027(ECDH):
-    # https://tools.ietf.org/html/rfc7027#appendix-A
-
-    def test_brainpoolP256r1(self):
-        self._do(
-            curve=curve_brainpoolp256r1,
-            generator=BRAINPOOLP256r1.generator,
-            dA=int("81DB1EE100150FF2EA338D708271BE38300CB54241D79950F77B063039804F1D", 16),
-            x_qA=int("44106E913F92BC02A1705D9953A8414DB95E1AAA49E81D9E85F929A8E3100BE5", 16),
-            y_qA=int("8AB4846F11CACCB73CE49CBDD120F5A900A69FD32C272223F789EF10EB089BDC", 16),
-            dB=int("55E40BC41E37E3E2AD25C3C6654511FFA8474A91A0032087593852D3E7D76BD3", 16),
-            x_qB=int("8D2D688C6CF93E1160AD04CC4429117DC2C41825E1E9FCA0ADDD34E6F1B39F7B", 16),
-            y_qB=int("990C57520812BE512641E47034832106BC7D3E8DD0E4C7F1136D7006547CEC6A", 16),
-            x_Z=int("89AFC39D41D3B327814B80940B042590F96556EC91E6AE7939BCE31F3A18BF2B", 16),
-            y_Z=int("49C27868F4ECA2179BFD7D59B1E3BF34C1DBDE61AE12931648F43E59632504DE", 16))
-
-    def test_brainpoolP384r1(self):
-        self._do(
-            curve=curve_brainpoolp384r1,
-            generator=BRAINPOOLP384r1.generator,
-            dA=int("1E20F5E048A5886F1F157C74E91BDE2B98C8B52D58E5003D57053FC4B0BD65D6F15EB5D1EE1610DF870795143627D042", 16),
-            x_qA=int("68B665DD91C195800650CDD363C625F4E742E8134667B767B1B476793588F885AB698C852D4A6E77A252D6380FCAF068", 16),
-            y_qA=int("55BC91A39C9EC01DEE36017B7D673A931236D2F1F5C83942D049E3FA20607493E0D038FF2FD30C2AB67D15C85F7FAA59", 16),
-            dB=int("032640BC6003C59260F7250C3DB58CE647F98E1260ACCE4ACDA3DD869F74E01F8BA5E0324309DB6A9831497ABAC96670", 16),
-            x_qB=int("4D44326F269A597A5B58BBA565DA5556ED7FD9A8A9EB76C25F46DB69D19DC8CE6AD18E404B15738B2086DF37E71D1EB4", 16),
-            y_qB=int("62D692136DE56CBE93BF5FA3188EF58BC8A3A0EC6C1E151A21038A42E9185329B5B275903D192F8D4E1F32FE9CC78C48", 16),
-            x_Z=int("0BD9D3A7EA0B3D519D09D8E48D0785FB744A6B355E6304BC51C229FBBCE239BBADF6403715C35D4FB2A5444F575D4F42", 16),
-            y_Z=int("0DF213417EBE4D8E40A5F76F66C56470C489A3478D146DECF6DF0D94BAE9E598157290F8756066975F1DB34B2324B7BD", 16))
-
-    def test_brainpoolP512r1(self):
-        self._do(
-            curve=curve_brainpoolp512r1,
-            generator=BRAINPOOLP512r1.generator,
-            dA=int("16302FF0DBBB5A8D733DAB7141C1B45ACBC8715939677F6A56850A38BD87BD59B09E80279609FF333EB9D4C061231FB26F92EEB04982A5F1D1764CAD57665422", 16),
-            x_qA=int("0A420517E406AAC0ACDCE90FCD71487718D3B953EFD7FBEC5F7F27E28C6149999397E91E029E06457DB2D3E640668B392C2A7E737A7F0BF04436D11640FD09FD", 16),
-            y_qA=int("72E6882E8DB28AAD36237CD25D580DB23783961C8DC52DFA2EC138AD472A0FCEF3887CF62B623B2A87DE5C588301EA3E5FC269B373B60724F5E82A6AD147FDE7", 16),
-            dB=int("230E18E1BCC88A362FA54E4EA3902009292F7F8033624FD471B5D8ACE49D12CFABBC19963DAB8E2F1EBA00BFFB29E4D72D13F2224562F405CB80503666B25429", 16),
-            x_qB=int("9D45F66DE5D67E2E6DB6E93A59CE0BB48106097FF78A081DE781CDB31FCE8CCBAAEA8DD4320C4119F1E9CD437A2EAB3731FA9668AB268D871DEDA55A5473199F", 16),
-            y_qB=int("2FDC313095BCDD5FB3A91636F07A959C8E86B5636A1E930E8396049CB481961D365CC11453A06C719835475B12CB52FC3C383BCE35E27EF194512B71876285FA", 16),
-            x_Z=int("A7927098655F1F9976FA50A9D566865DC530331846381C87256BAF3226244B76D36403C024D7BBF0AA0803EAFF405D3D24F11A9B5C0BEF679FE1454B21C4CD1F", 16),
-            y_Z=int("7DB71C3DEF63212841C463E881BDCF055523BD368240E6C3143BD8DEF8B3B3223B95E0F53082FF5E412F4222537A43DF1C6D25729DDB51620A832BE6A26680A2", 16))
-
-
-def __main__():
-    unittest.main()
-
-
-if __name__ == "__main__":
-    __main__()
+    assert vk.verify(sig, msg, md, sigdecode_strings)
