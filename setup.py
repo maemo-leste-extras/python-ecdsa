@@ -40,5 +40,9 @@ setup(name="ecdsa",
           "Programming Language :: Python :: 3.7",
           "Programming Language :: Python :: 3.8",
       ],
-      install_requires=['six'],
+      install_requires=['six>=1.9.0'],
+      extras_require={
+          'gmpy2': 'gmpy2',
+          'gmpy': 'gmpy',
+      },
       )
