@@ -2,6 +2,7 @@ python-ecdsa (0.15-1) UNRELEASED; urgency=medium
 
   * New upstream release (0.15-1)
     + Update 00-remove-temp-test-dir.patch
+  * Bump Standards-Version to 4.5.0. No changes required
 
  -- Josue Ortega <josue@debian.org>  Mon, 23 Mar 2020 18:45:36 -0600
 
