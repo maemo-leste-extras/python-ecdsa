@@ -1,3 +1,4 @@
+import pickle
 
 try:
     import unittest2 as unittest
@@ -7,9 +8,10 @@ except ImportError:
 import hypothesis.strategies as st
 from hypothesis import given, assume, settings, example
 
-from .ellipticcurve import Point, PointJacobi, INFINITY
+from .ellipticcurve import CurveFp, Point, PointJacobi, INFINITY
 from .ecdsa import generator_256, curve_256, generator_224
 from .numbertheory import inverse_mod
+
 
 class TestJacobi(unittest.TestCase):
     def test___init__(self):
@@ -203,8 +205,10 @@ class TestJacobi(unittest.TestCase):
         self.assertEqual(a, b)
 
     @settings(max_examples=10)
-    @given(st.integers(min_value=1, max_value=int(generator_256.order())),
-           st.integers(min_value=1, max_value=int(generator_256.order())))
+    @given(
+        st.integers(min_value=1, max_value=int(generator_256.order())),
+        st.integers(min_value=1, max_value=int(generator_256.order())),
+    )
     @example(3, 3)
     def test_add_scaled_points(self, a_mul, b_mul):
         j_g = PointJacobi.from_affine(generator_256)
@@ -216,9 +220,11 @@ class TestJacobi(unittest.TestCase):
         self.assertEqual(c, j_g * (a_mul + b_mul))
 
     @settings(max_examples=10)
-    @given(st.integers(min_value=1, max_value=int(generator_256.order())),
-           st.integers(min_value=1, max_value=int(generator_256.order())),
-           st.integers(min_value=1, max_value=int(curve_256.p()-1)))
+    @given(
+        st.integers(min_value=1, max_value=int(generator_256.order())),
+        st.integers(min_value=1, max_value=int(generator_256.order())),
+        st.integers(min_value=1, max_value=int(curve_256.p() - 1)),
+    )
     def test_add_one_scaled_point(self, a_mul, b_mul, new_z):
         j_g = PointJacobi.from_affine(generator_256)
         a = PointJacobi.from_affine(j_g * a_mul)
@@ -231,20 +237,23 @@ class TestJacobi(unittest.TestCase):
         new_zz = new_z * new_z % p
 
         b = PointJacobi(
-            curve_256, b.x() * new_zz % p, b.y() * new_zz * new_z % p, new_z)
+            curve_256, b.x() * new_zz % p, b.y() * new_zz * new_z % p, new_z
+        )
 
         c = a + b
 
         self.assertEqual(c, j_g * (a_mul + b_mul))
 
     @settings(max_examples=10)
-    @given(st.integers(min_value=1, max_value=int(generator_256.order())),
-           st.integers(min_value=1, max_value=int(generator_256.order())),
-           st.integers(min_value=1, max_value=int(curve_256.p()-1)))
+    @given(
+        st.integers(min_value=1, max_value=int(generator_256.order())),
+        st.integers(min_value=1, max_value=int(generator_256.order())),
+        st.integers(min_value=1, max_value=int(curve_256.p() - 1)),
+    )
     @example(1, 1, 1)
     @example(3, 3, 3)
-    @example(2, int(generator_256.order()-2), 1)
-    @example(2, int(generator_256.order()-2), 3)
+    @example(2, int(generator_256.order() - 2), 1)
+    @example(2, int(generator_256.order() - 2), 3)
     def test_add_same_scale_points(self, a_mul, b_mul, new_z):
         j_g = PointJacobi.from_affine(generator_256)
         a = PointJacobi.from_affine(j_g * a_mul)
@@ -257,23 +266,31 @@ class TestJacobi(unittest.TestCase):
         new_zz = new_z * new_z % p
 
         a = PointJacobi(
-            curve_256, a.x() * new_zz % p, a.y() * new_zz * new_z % p, new_z)
+            curve_256, a.x() * new_zz % p, a.y() * new_zz * new_z % p, new_z
+        )
         b = PointJacobi(
-            curve_256, b.x() * new_zz % p, b.y() * new_zz * new_z % p, new_z)
+            curve_256, b.x() * new_zz % p, b.y() * new_zz * new_z % p, new_z
+        )
 
         c = a + b
 
         self.assertEqual(c, j_g * (a_mul + b_mul))
 
     @settings(max_examples=14)
-    @given(st.integers(min_value=1, max_value=int(generator_256.order())),
-           st.integers(min_value=1, max_value=int(generator_256.order())),
-           st.lists(st.integers(min_value=1, max_value=int(curve_256.p()-1)),
-                    min_size=2, max_size=2, unique=True))
+    @given(
+        st.integers(min_value=1, max_value=int(generator_256.order())),
+        st.integers(min_value=1, max_value=int(generator_256.order())),
+        st.lists(
+            st.integers(min_value=1, max_value=int(curve_256.p() - 1)),
+            min_size=2,
+            max_size=2,
+            unique=True,
+        ),
+    )
     @example(2, 2, [2, 1])
     @example(2, 2, [2, 3])
-    @example(2, int(generator_256.order()-2), [2, 3])
-    @example(2, int(generator_256.order()-2), [2, 1])
+    @example(2, int(generator_256.order() - 2), [2, 3])
+    @example(2, int(generator_256.order() - 2), [2, 1])
     def test_add_different_scale_points(self, a_mul, b_mul, new_z):
         j_g = PointJacobi.from_affine(generator_256)
         a = PointJacobi.from_affine(j_g * a_mul)
@@ -291,12 +308,14 @@ class TestJacobi(unittest.TestCase):
             curve_256,
             a.x() * new_zz0 % p,
             a.y() * new_zz0 * new_z[0] % p,
-            new_z[0])
+            new_z[0],
+        )
         b = PointJacobi(
             curve_256,
             b.x() * new_zz1 % p,
             b.y() * new_zz1 * new_z[1] % p,
-            new_z[1])
+            new_z[1],
+        )
 
         c = a + b
 
@@ -330,10 +349,12 @@ class TestJacobi(unittest.TestCase):
         b = PointJacobi.from_affine(j_g * 255, True)
 
         self.assertEqual(j_g * 256, j_g + b)
-        self.assertEqual(j_g * (0xff00 + 255 * 0xf0f0),
-                         j_g * 0xff00 + b * 0xf0f0)
-        self.assertEqual(j_g * (0xff00 + 255 * 0xf0f0),
-                         j_g.mul_add(0xff00, b, 0xf0f0))
+        self.assertEqual(
+            j_g * (0xFF00 + 255 * 0xF0F0), j_g * 0xFF00 + b * 0xF0F0
+        )
+        self.assertEqual(
+            j_g * (0xFF00 + 255 * 0xF0F0), j_g.mul_add(0xFF00, b, 0xF0F0)
+        )
 
     def test_mul_add_to_mul(self):
         j_g = PointJacobi.from_affine(generator_256)
@@ -347,10 +368,10 @@ class TestJacobi(unittest.TestCase):
         j_g = PointJacobi.from_affine(generator_256)
 
         w_a = generator_256 * 255
-        w_b = generator_256 * (0xa8*0xf0)
-        j_b = j_g * 0xa8
+        w_b = generator_256 * (0xA8 * 0xF0)
+        j_b = j_g * 0xA8
 
-        ret = j_g.mul_add(255, j_b, 0xf0)
+        ret = j_g.mul_add(255, j_b, 0xF0)
 
         self.assertEqual(ret.to_affine(), w_a + w_b)
 
@@ -359,7 +380,18 @@ class TestJacobi(unittest.TestCase):
         b = PointJacobi.from_affine(j_g * 255)
 
         self.assertEqual(j_g * 256, j_g + b)
-        self.assertEqual(j_g * (0xff00 + 255 * 0xf0f0),
-                         j_g * 0xff00 + b * 0xf0f0)
-        self.assertEqual(j_g * (0xff00 + 255 * 0xf0f0),
-                         j_g.mul_add(0xff00, b, 0xf0f0))
+        self.assertEqual(
+            j_g * (0xFF00 + 255 * 0xF0F0), j_g * 0xFF00 + b * 0xF0F0
+        )
+        self.assertEqual(
+            j_g * (0xFF00 + 255 * 0xF0F0), j_g.mul_add(0xFF00, b, 0xF0F0)
+        )
+
+    def test_equality(self):
+        pj1 = PointJacobi(curve=CurveFp(23, 1, 1, 1), x=2, y=3, z=1, order=1)
+        pj2 = PointJacobi(curve=CurveFp(23, 1, 1, 1), x=2, y=3, z=1, order=1)
+        self.assertEqual(pj1, pj2)
+
+    def test_pickle(self):
+        pj = PointJacobi(curve=CurveFp(23, 1, 1, 1), x=2, y=3, z=1, order=1)
+        self.assertEqual(pickle.loads(pickle.dumps(pj)), pj)

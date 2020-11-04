@@ -68,7 +68,7 @@ Primary classes for performing signing and verification operations.
 
 import binascii
 from hashlib import sha1
-from six import PY3, b
+from six import PY2, b
 from . import ecdsa
 from . import der
 from . import rfc6979
@@ -78,12 +78,23 @@ from .numbertheory import square_root_mod_prime, SquareRootError
 from .ecdsa import RSZeroError
 from .util import string_to_number, number_to_string, randrange
 from .util import sigencode_string, sigdecode_string
-from .util import oid_ecPublicKey, encoded_oid_ecPublicKey, MalformedSignature
+from .util import (
+    oid_ecPublicKey,
+    encoded_oid_ecPublicKey,
+    oid_ecDH,
+    oid_ecMQV,
+    MalformedSignature,
+)
 from ._compat import normalise_bytes
 
 
-__all__ = ["BadSignatureError", "BadDigestError", "VerifyingKey", "SigningKey",
-           "MalformedPointError"]
+__all__ = [
+    "BadSignatureError",
+    "BadDigestError",
+    "VerifyingKey",
+    "SigningKey",
+    "MalformedPointError",
+]
 
 
 class BadSignatureError(Exception):
@@ -129,8 +140,9 @@ class VerifyingKey(object):
     def __init__(self, _error__please_use_generate=None):
         """Unsupported, please use one of the classmethods to initialise."""
         if not _error__please_use_generate:
-            raise TypeError("Please use VerifyingKey.generate() to "
-                            "construct me")
+            raise TypeError(
+                "Please use VerifyingKey.generate() to construct me"
+            )
         self.curve = None
         self.default_hashfunc = None
         self.pubkey = None
@@ -138,18 +150,19 @@ class VerifyingKey(object):
     def __repr__(self):
         pub_key = self.to_string("compressed")
         return "VerifyingKey.from_string({0!r}, {1!r}, {2})".format(
-            pub_key, self.curve, self.default_hashfunc().name)
+            pub_key, self.curve, self.default_hashfunc().name
+        )
 
     def __eq__(self, other):
         """Return True if the points are identical, False otherwise."""
         if isinstance(other, VerifyingKey):
-            return self.curve == other.curve \
-                and self.pubkey == other.pubkey
+            return self.curve == other.curve and self.pubkey == other.pubkey
         return NotImplemented
 
     @classmethod
-    def from_public_point(cls, point, curve=NIST192p, hashfunc=sha1,
-                          validate_point=True):
+    def from_public_point(
+        cls, point, curve=NIST192p, hashfunc=sha1, validate_point=True
+    ):
         """
         Initialise the object from a Point object.
 
@@ -180,8 +193,9 @@ class VerifyingKey(object):
         self.curve = curve
         self.default_hashfunc = hashfunc
         try:
-            self.pubkey = ecdsa.Public_key(curve.generator, point,
-                                           validate_point)
+            self.pubkey = ecdsa.Public_key(
+                curve.generator, point, validate_point
+            )
         except ecdsa.InvalidPointError:
             raise MalformedPointError("Point does not lie on the curve")
         self.pubkey.order = curve.order
@@ -189,7 +203,8 @@ class VerifyingKey(object):
 
     def precompute(self):
         self.pubkey.point = ellipticcurve.PointJacobi.from_affine(
-            self.pubkey.point, True)
+            self.pubkey.point, True
+        )
 
     @staticmethod
     def _from_raw_encoding(string, curve):
@@ -202,8 +217,8 @@ class VerifyingKey(object):
         order = curve.order
         # real assert, from_string() should not call us with different length
         assert len(string) == curve.verifying_key_length
-        xs = string[:curve.baselen]
-        ys = string[curve.baselen:]
+        xs = string[: curve.baselen]
+        ys = string[curve.baselen :]
         if len(xs) != curve.baselen:
             raise MalformedPointError("Unexpected length of encoded x")
         if len(ys) != curve.baselen:
@@ -216,10 +231,10 @@ class VerifyingKey(object):
     @staticmethod
     def _from_compressed(string, curve):
         """Decode public point from compressed encoding."""
-        if string[:1] not in (b('\x02'), b('\x03')):
+        if string[:1] not in (b("\x02"), b("\x03")):
             raise MalformedPointError("Malformed compressed point encoding")
 
-        is_even = string[:1] == b('\x02')
+        is_even = string[:1] == b("\x02")
         x = string_to_number(string[1:])
         order = curve.order
         p = curve.curve.p()
@@ -228,7 +243,8 @@ class VerifyingKey(object):
             beta = square_root_mod_prime(alpha, p)
         except SquareRootError as e:
             raise MalformedPointError(
-                "Encoding does not correspond to a point on curve", e)
+                "Encoding does not correspond to a point on curve", e
+            )
         if is_even == bool(beta & 1):
             y = p - beta
         else:
@@ -239,22 +255,26 @@ class VerifyingKey(object):
     def _from_hybrid(cls, string, curve, validate_point):
         """Decode public point from hybrid encoding."""
         # real assert, from_string() should not call us with different types
-        assert string[:1] in (b('\x06'), b('\x07'))
+        assert string[:1] in (b("\x06"), b("\x07"))
 
         # primarily use the uncompressed as it's easiest to handle
         point = cls._from_raw_encoding(string[1:], curve)
 
         # but validate if it's self-consistent if we're asked to do that
-        if validate_point \
-                and (point.y() & 1 and string[:1] != b('\x07')
-                     or (not point.y() & 1) and string[:1] != b('\x06')):
+        if validate_point and (
+            point.y() & 1
+            and string[:1] != b("\x07")
+            or (not point.y() & 1)
+            and string[:1] != b("\x06")
+        ):
             raise MalformedPointError("Inconsistent hybrid point encoding")
 
         return point
 
     @classmethod
-    def from_string(cls, string, curve=NIST192p, hashfunc=sha1,
-                    validate_point=True):
+    def from_string(
+        cls, string, curve=NIST192p, hashfunc=sha1, validate_point=True
+    ):
         """
         Initialise the object from byte encoding of public key.
 
@@ -288,22 +308,23 @@ class VerifyingKey(object):
         if sig_len == curve.verifying_key_length:
             point = cls._from_raw_encoding(string, curve)
         elif sig_len == curve.verifying_key_length + 1:
-            if string[:1] in (b('\x06'), b('\x07')):
+            if string[:1] in (b("\x06"), b("\x07")):
                 point = cls._from_hybrid(string, curve, validate_point)
-            elif string[:1] == b('\x04'):
+            elif string[:1] == b("\x04"):
                 point = cls._from_raw_encoding(string[1:], curve)
             else:
                 raise MalformedPointError(
-                    "Invalid X9.62 encoding of the public point")
+                    "Invalid X9.62 encoding of the public point"
+                )
         elif sig_len == curve.baselen + 1:
             point = cls._from_compressed(string, curve)
         else:
             raise MalformedPointError(
                 "Length of string does not match lengths of "
                 "any of the supported encodings of {0} "
-                "curve.".format(curve.name))
-        return cls.from_public_point(point, curve, hashfunc,
-                                     validate_point)
+                "curve.".format(curve.name)
+            )
+        return cls.from_public_point(point, curve, hashfunc, validate_point)
 
     @classmethod
     def from_pem(cls, string, hashfunc=sha1):
@@ -360,31 +381,39 @@ class VerifyingKey(object):
         # [[oid_ecPublicKey,oid_curve], point_str_bitstring]
         s1, empty = der.remove_sequence(string)
         if empty != b"":
-            raise der.UnexpectedDER("trailing junk after DER pubkey: %s" %
-                                    binascii.hexlify(empty))
+            raise der.UnexpectedDER(
+                "trailing junk after DER pubkey: %s" % binascii.hexlify(empty)
+            )
         s2, point_str_bitstring = der.remove_sequence(s1)
         # s2 = oid_ecPublicKey,oid_curve
         oid_pk, rest = der.remove_object(s2)
         oid_curve, empty = der.remove_object(rest)
         if empty != b"":
-            raise der.UnexpectedDER("trailing junk after DER pubkey objects: %s" %
-                                    binascii.hexlify(empty))
+            raise der.UnexpectedDER(
+                "trailing junk after DER pubkey objects: %s"
+                % binascii.hexlify(empty)
+            )
         if not oid_pk == oid_ecPublicKey:
-            raise der.UnexpectedDER("Unexpected object identifier in DER "
-                                    "encoding: {0!r}".format(oid_pk))
+            raise der.UnexpectedDER(
+                "Unexpected object identifier in DER "
+                "encoding: {0!r}".format(oid_pk)
+            )
         curve = find_curve(oid_curve)
         point_str, empty = der.remove_bitstring(point_str_bitstring, 0)
         if empty != b"":
-            raise der.UnexpectedDER("trailing junk after pubkey pointstring: %s" %
-                                    binascii.hexlify(empty))
+            raise der.UnexpectedDER(
+                "trailing junk after pubkey pointstring: %s"
+                % binascii.hexlify(empty)
+            )
         # raw encoding of point is invalid in DER files
         if len(point_str) == curve.verifying_key_length:
             raise der.UnexpectedDER("Malformed encoding of public point")
         return cls.from_string(point_str, curve, hashfunc=hashfunc)
 
     @classmethod
-    def from_public_key_recovery(cls, signature, data, curve, hashfunc=sha1,
-                                 sigdecode=sigdecode_string):
+    def from_public_key_recovery(
+        cls, signature, data, curve, hashfunc=sha1, sigdecode=sigdecode_string
+    ):
         """
         Return keys that can be used as verifiers of the provided signature.
 
@@ -414,13 +443,18 @@ class VerifyingKey(object):
         data = normalise_bytes(data)
         digest = hashfunc(data).digest()
         return cls.from_public_key_recovery_with_digest(
-            signature, digest, curve, hashfunc=hashfunc,
-            sigdecode=sigdecode)
+            signature, digest, curve, hashfunc=hashfunc, sigdecode=sigdecode
+        )
 
     @classmethod
     def from_public_key_recovery_with_digest(
-            cls, signature, digest, curve,
-            hashfunc=sha1, sigdecode=sigdecode_string):
+        cls,
+        signature,
+        digest,
+        curve,
+        hashfunc=sha1,
+        sigdecode=sigdecode_string,
+    ):
         """
         Return keys that can be used as verifiers of the provided signature.
 
@@ -457,8 +491,9 @@ class VerifyingKey(object):
         pks = sig.recover_public_keys(digest_as_number, generator)
 
         # Transforms the ecdsa.Public_key object into a VerifyingKey
-        verifying_keys = [cls.from_public_point(pk.point, curve, hashfunc)
-                          for pk in pks]
+        verifying_keys = [
+            cls.from_public_point(pk.point, curve, hashfunc) for pk in pks
+        ]
         return verifying_keys
 
     def _raw_encode(self):
@@ -473,17 +508,17 @@ class VerifyingKey(object):
         order = self.pubkey.order
         x_str = number_to_string(self.pubkey.point.x(), order)
         if self.pubkey.point.y() & 1:
-            return b('\x03') + x_str
+            return b("\x03") + x_str
         else:
-            return b('\x02') + x_str
+            return b("\x02") + x_str
 
     def _hybrid_encode(self):
         """Encode the public point into the hybrid form."""
         raw_enc = self._raw_encode()
         if self.pubkey.point.y() & 1:
-            return b('\x07') + raw_enc
+            return b("\x07") + raw_enc
         else:
-            return b('\x06') + raw_enc
+            return b("\x06") + raw_enc
 
     def to_string(self, encoding="raw"):
         """
@@ -509,7 +544,7 @@ class VerifyingKey(object):
         if encoding == "raw":
             return self._raw_encode()
         elif encoding == "uncompressed":
-            return b('\x04') + self._raw_encode()
+            return b("\x04") + self._raw_encode()
         elif encoding == "hybrid":
             return self._hybrid_encode()
         else:
@@ -531,7 +566,10 @@ class VerifyingKey(object):
             implementations, it is as big as "uncompressed".
 
         :return: portable encoding of the public key
-        :rtype: str
+        :rtype: bytes
+
+        .. warning:: The PEM is encoded to US-ASCII, it needs to be
+            re-encoded if the system is incompatible (e.g. uses UTF-16)
         """
         return der.topem(self.to_der(point_encoding), "PUBLIC KEY")
 
@@ -554,14 +592,23 @@ class VerifyingKey(object):
         if point_encoding == "raw":
             raise ValueError("raw point_encoding not allowed in DER")
         point_str = self.to_string(point_encoding)
-        return der.encode_sequence(der.encode_sequence(encoded_oid_ecPublicKey,
-                                                       self.curve.encoded_oid),
-                                   # 0 is the number of unused bits in the
-                                   # bit string
-                                   der.encode_bitstring(point_str, 0))
+        return der.encode_sequence(
+            der.encode_sequence(
+                encoded_oid_ecPublicKey, self.curve.encoded_oid
+            ),
+            # 0 is the number of unused bits in the
+            # bit string
+            der.encode_bitstring(point_str, 0),
+        )
 
-    def verify(self, signature, data, hashfunc=None,
-               sigdecode=sigdecode_string):
+    def verify(
+        self,
+        signature,
+        data,
+        hashfunc=None,
+        sigdecode=sigdecode_string,
+        allow_truncate=True,
+    ):
         """
         Verify a signature made over provided data.
 
@@ -587,6 +634,11 @@ class VerifyingKey(object):
             second one. See :func:`ecdsa.util.sigdecode_string` and
             :func:`ecdsa.util.sigdecode_der` for examples.
         :type sigdecode: callable
+        :param bool allow_truncate: if True, the provided digest can have
+            bigger bit-size than the order of the curve, the extra bits (at
+            the end of the digest) will be truncated. Use it when verifying
+            SHA-384 output using NIST256p or in similar situations. Defaults to
+            True.
 
         :raises BadSignatureError: if the signature is invalid or malformed
 
@@ -599,10 +651,15 @@ class VerifyingKey(object):
 
         hashfunc = hashfunc or self.default_hashfunc
         digest = hashfunc(data).digest()
-        return self.verify_digest(signature, digest, sigdecode, True)
+        return self.verify_digest(signature, digest, sigdecode, allow_truncate)
 
-    def verify_digest(self, signature, digest, sigdecode=sigdecode_string,
-                      allow_truncate=False):
+    def verify_digest(
+        self,
+        signature,
+        digest,
+        sigdecode=sigdecode_string,
+        allow_truncate=False,
+    ):
         """
         Verify a signature made over provided hash value.
 
@@ -638,11 +695,12 @@ class VerifyingKey(object):
         # it, the decoders will do that
         digest = normalise_bytes(digest)
         if allow_truncate:
-            digest = digest[:self.curve.baselen]
+            digest = digest[: self.curve.baselen]
         if len(digest) > self.curve.baselen:
-            raise BadDigestError("this curve (%s) is too short "
-                                 "for your digest (%d)" % (self.curve.name,
-                                                           8 * len(digest)))
+            raise BadDigestError(
+                "this curve (%s) is too short "
+                "for your digest (%d)" % (self.curve.name, 8 * len(digest))
+            )
         number = string_to_number(digest)
         try:
             r, s = sigdecode(signature, self.pubkey.order)
@@ -681,9 +739,11 @@ class SigningKey(object):
     def __eq__(self, other):
         """Return True if the points are identical, False otherwise."""
         if isinstance(other, SigningKey):
-            return self.curve == other.curve \
-                and self.verifying_key == other.verifying_key \
+            return (
+                self.curve == other.curve
+                and self.verifying_key == other.verifying_key
                 and self.privkey == other.privkey
+            )
         return NotImplemented
 
     @classmethod
@@ -741,13 +801,15 @@ class SigningKey(object):
         n = curve.order
         if not 1 <= secexp < n:
             raise MalformedPointError(
-                "Invalid value for secexp, expected integer between 1 and {0}"
-                .format(n))
+                "Invalid value for secexp, expected integer "
+                "between 1 and {0}".format(n)
+            )
         pubkey_point = curve.generator * secexp
         if hasattr(pubkey_point, "scale"):
             pubkey_point = pubkey_point.scale()
-        self.verifying_key = VerifyingKey.from_public_point(pubkey_point, curve,
-                                                            hashfunc, False)
+        self.verifying_key = VerifyingKey.from_public_point(
+            pubkey_point, curve, hashfunc, False
+        )
         pubkey = self.verifying_key.pubkey
         self.privkey = ecdsa.Private_key(pubkey, secexp)
         self.privkey.order = n
@@ -782,8 +844,9 @@ class SigningKey(object):
         string = normalise_bytes(string)
         if len(string) != curve.baselen:
             raise MalformedPointError(
-                "Invalid length of private key, received {0}, expected {1}"
-                .format(len(string), curve.baselen))
+                "Invalid length of private key, received {0}, "
+                "expected {1}".format(len(string), curve.baselen)
+            )
         secexp = string_to_number(string)
         return cls.from_secret_exponent(secexp, curve, hashfunc)
 
@@ -792,16 +855,13 @@ class SigningKey(object):
         """
         Initialise from key stored in :term:`PEM` format.
 
-        Note, the only PEM format supported is the un-encrypted RFC5915
-        (the sslay format) supported by OpenSSL, the more common PKCS#8 format
-        is NOT supported (see:
-        https://github.com/warner/python-ecdsa/issues/113 )
-
-        ``openssl ec -in pkcs8.pem -out sslay.pem`` can be used to
-        convert PKCS#8 file to this legacy format.
+        The PEM formats supported are the un-encrypted RFC5915
+        (the ssleay format) supported by OpenSSL, and the more common
+        un-encrypted RFC5958 (the PKCS #8 format).
 
         The legacy format files have the header with the string
         ``BEGIN EC PRIVATE KEY``.
+        PKCS#8 files have the header ``BEGIN PRIVATE KEY``.
         Encrypted files (ones that include the string
         ``Proc-Type: 4,ENCRYPTED``
         right after the PEM header) are not supported.
@@ -818,31 +878,32 @@ class SigningKey(object):
             key failed
         :raises UnexpectedDER: if the encoding of the PEM file is incorrect
 
-        :return: Initialised VerifyingKey object
-        :rtype: VerifyingKey
+        :return: Initialised SigningKey object
+        :rtype: SigningKey
         """
-        # the privkey pem may have multiple sections, commonly it also has
-        # "EC PARAMETERS", we need just "EC PRIVATE KEY".
-        if PY3 and isinstance(string, str):
+        if not PY2 and isinstance(string, str):
             string = string.encode()
-        privkey_pem = string[string.index(b("-----BEGIN EC PRIVATE KEY-----")):]
-        return cls.from_der(der.unpem(privkey_pem), hashfunc)
+
+        # The privkey pem may have multiple sections, commonly it also has
+        # "EC PARAMETERS", we need just "EC PRIVATE KEY". PKCS#8 should not
+        # have the "EC PARAMETERS" section; it's just "PRIVATE KEY".
+        private_key_index = string.find(b"-----BEGIN EC PRIVATE KEY-----")
+        if private_key_index == -1:
+            private_key_index = string.index(b"-----BEGIN PRIVATE KEY-----")
+
+        return cls.from_der(der.unpem(string[private_key_index:]), hashfunc)
 
     @classmethod
     def from_der(cls, string, hashfunc=sha1):
         """
         Initialise from key stored in :term:`DER` format.
 
-        Note, the only DER format supported is the RFC5915
-        (the sslay format) supported by OpenSSL, the more common PKCS#8 format
-        is NOT supported (see:
-        https://github.com/warner/python-ecdsa/issues/113 )
+        The DER formats supported are the un-encrypted RFC5915
+        (the ssleay format) supported by OpenSSL, and the more common
+        un-encrypted RFC5958 (the PKCS #8 format).
 
-        ``openssl ec -in pkcs8.pem -outform der -out sslay.der`` can be
-        used to convert PKCS#8 file to this legacy format.
-
-        The encoding of the ASN.1 object in those files follows following
-        syntax specified in RFC5915::
+        Both formats contain an ASN.1 object following the syntax specified
+        in RFC5915::
 
             ECPrivateKey ::= SEQUENCE {
               version        INTEGER { ecPrivkeyVer1(1) }} (ecPrivkeyVer1),
@@ -851,14 +912,30 @@ class SigningKey(object):
               publicKey  [1] BIT STRING OPTIONAL
             }
 
-        The only format supported for the `parameters` field is the named
-        curve method. Explicit encoding of curve parameters is not supported.
-
-        While `parameters` field is defined as optional, this implementation
-        requires its presence for correct parsing of the keys.
-
         `publicKey` field is ignored completely (errors, if any, in it will
         be undetected).
+
+        The only format supported for the `parameters` field is the named
+        curve method. Explicit encoding of curve parameters is not supported.
+        In the legacy ssleay format, this implementation requires the optional
+        `parameters` field to get the curve name. In PKCS #8 format, the curve
+        is part of the PrivateKeyAlgorithmIdentifier.
+
+        The PKCS #8 format includes an ECPrivateKey object as the `privateKey`
+        field within a larger structure:
+
+            OneAsymmetricKey ::= SEQUENCE {
+                version                   Version,
+                privateKeyAlgorithm       PrivateKeyAlgorithmIdentifier,
+                privateKey                PrivateKey,
+                attributes            [0] Attributes OPTIONAL,
+                ...,
+                [[2: publicKey        [1] PublicKey OPTIONAL ]],
+                ...
+            }
+
+        The `attributes` and `publicKey` fields are completely ignored; errors
+        in them will not be detected.
 
         :param string: binary string with DER-encoded private ECDSA key
         :type string: bytes like object
@@ -869,28 +946,83 @@ class SigningKey(object):
             key failed
         :raises UnexpectedDER: if the encoding of the DER file is incorrect
 
-        :return: Initialised VerifyingKey object
-        :rtype: VerifyingKey
+        :return: Initialised SigningKey object
+        :rtype: SigningKey
         """
-        string = normalise_bytes(string)
-        s, empty = der.remove_sequence(string)
+        s = normalise_bytes(string)
+        curve = None
+
+        s, empty = der.remove_sequence(s)
         if empty != b(""):
-            raise der.UnexpectedDER("trailing junk after DER privkey: %s" %
-                                    binascii.hexlify(empty))
-        one, s = der.remove_integer(s)
-        if one != 1:
-            raise der.UnexpectedDER("expected '1' at start of DER privkey,"
-                                    " got %d" % one)
+            raise der.UnexpectedDER(
+                "trailing junk after DER privkey: %s" % binascii.hexlify(empty)
+            )
+
+        version, s = der.remove_integer(s)
+
+        # At this point, PKCS #8 has a sequence containing the algorithm
+        # identifier and the curve identifier. The ssleay format instead has
+        # an octet string containing the key data, so this is how we can
+        # distinguish the two formats.
+        if der.is_sequence(s):
+            if version not in (0, 1):
+                raise der.UnexpectedDER(
+                    "expected version '0' or '1' at start of privkey, got %d"
+                    % version
+                )
+
+            sequence, s = der.remove_sequence(s)
+            algorithm_oid, algorithm_identifier = der.remove_object(sequence)
+            curve_oid, empty = der.remove_object(algorithm_identifier)
+            curve = find_curve(curve_oid)
+
+            if algorithm_oid not in (oid_ecPublicKey, oid_ecDH, oid_ecMQV):
+                raise der.UnexpectedDER(
+                    "unexpected algorithm identifier '%s'" % (algorithm_oid,)
+                )
+            if empty != b"":
+                raise der.UnexpectedDER(
+                    "unexpected data after algorithm identifier: %s"
+                    % binascii.hexlify(empty)
+                )
+
+            # Up next is an octet string containing an ECPrivateKey. Ignore
+            # the optional "attributes" and "publicKey" fields that come after.
+            s, _ = der.remove_octet_string(s)
+
+            # Unpack the ECPrivateKey to get to the key data octet string,
+            # and rejoin the ssleay parsing path.
+            s, empty = der.remove_sequence(s)
+            if empty != b(""):
+                raise der.UnexpectedDER(
+                    "trailing junk after DER privkey: %s"
+                    % binascii.hexlify(empty)
+                )
+
+            version, s = der.remove_integer(s)
+
+        # The version of the ECPrivateKey must be 1.
+        if version != 1:
+            raise der.UnexpectedDER(
+                "expected version '1' at start of DER privkey, got %d"
+                % version
+            )
+
         privkey_str, s = der.remove_octet_string(s)
-        tag, curve_oid_str, s = der.remove_constructed(s)
-        if tag != 0:
-            raise der.UnexpectedDER("expected tag 0 in DER privkey,"
-                                    " got %d" % tag)
-        curve_oid, empty = der.remove_object(curve_oid_str)
-        if empty != b(""):
-            raise der.UnexpectedDER("trailing junk after DER privkey "
-                                    "curve_oid: %s" % binascii.hexlify(empty))
-        curve = find_curve(curve_oid)
+
+        if not curve:
+            tag, curve_oid_str, s = der.remove_constructed(s)
+            if tag != 0:
+                raise der.UnexpectedDER(
+                    "expected tag 0 in DER privkey, got %d" % tag
+                )
+            curve_oid, empty = der.remove_object(curve_oid_str)
+            if empty != b(""):
+                raise der.UnexpectedDER(
+                    "trailing junk after DER privkey "
+                    "curve_oid: %s" % binascii.hexlify(empty)
+                )
+            curve = find_curve(curve_oid)
 
         # we don't actually care about the following fields
         #
@@ -901,11 +1033,14 @@ class SigningKey(object):
         # pubkey_str = der.remove_bitstring(pubkey_bitstring, 0)
         # if empty != "":
         #     raise der.UnexpectedDER("trailing junk after DER privkey "
-        #                             "pubkeystr: %s" % binascii.hexlify(empty))
+        #                             "pubkeystr: %s"
+        #                             % binascii.hexlify(empty))
 
         # our from_string method likes fixed-length privkey strings
         if len(privkey_str) < curve.baselen:
-            privkey_str = b("\x00") * (curve.baselen - len(privkey_str)) + privkey_str
+            privkey_str = (
+                b("\x00") * (curve.baselen - len(privkey_str)) + privkey_str
+            )
         return cls.from_string(privkey_str, curve, hashfunc)
 
     def to_string(self):
@@ -923,7 +1058,7 @@ class SigningKey(object):
         s = number_to_string(secexp, self.privkey.order)
         return s
 
-    def to_pem(self, point_encoding="uncompressed"):
+    def to_pem(self, point_encoding="uncompressed", format="ssleay"):
         """
         Convert the private key to the :term:`PEM` format.
 
@@ -932,17 +1067,24 @@ class SigningKey(object):
         Only the named curve format is supported.
         The public key will be included in generated string.
 
-        The PEM header will specify ``BEGIN EC PRIVATE KEY``
+        The PEM header will specify ``BEGIN EC PRIVATE KEY`` or
+        ``BEGIN PRIVATE KEY``, depending on the desired format.
 
         :param str point_encoding: format to use for encoding public point
+        :param str format: either ``ssleay`` (default) or ``pkcs8``
 
         :return: PEM encoded private key
-        :rtype: str
+        :rtype: bytes
+
+        .. warning:: The PEM is encoded to US-ASCII, it needs to be
+            re-encoded if the system is incompatible (e.g. uses UTF-16)
         """
         # TODO: "BEGIN ECPARAMETERS"
-        return der.topem(self.to_der(point_encoding), "EC PRIVATE KEY")
+        assert format in ("ssleay", "pkcs8")
+        header = "EC PRIVATE KEY" if format == "ssleay" else "PRIVATE KEY"
+        return der.topem(self.to_der(point_encoding, format), header)
 
-    def to_der(self, point_encoding="uncompressed"):
+    def to_der(self, point_encoding="uncompressed", format="ssleay"):
         """
         Convert the private key to the :term:`DER` format.
 
@@ -952,6 +1094,7 @@ class SigningKey(object):
         The public key will be included in the generated string.
 
         :param str point_encoding: format to use for encoding public point
+        :param str format: either ``ssleay`` (default) or ``pkcs8``
 
         :return: DER encoded private key
         :rtype: bytes
@@ -960,14 +1103,29 @@ class SigningKey(object):
         #      cont[1],bitstring])
         if point_encoding == "raw":
             raise ValueError("raw encoding not allowed in DER")
+        assert format in ("ssleay", "pkcs8")
         encoded_vk = self.get_verifying_key().to_string(point_encoding)
         # the 0 in encode_bitstring specifies the number of unused bits
         # in the `encoded_vk` string
-        return der.encode_sequence(
+        ec_private_key = der.encode_sequence(
             der.encode_integer(1),
             der.encode_octet_string(self.to_string()),
             der.encode_constructed(0, self.curve.encoded_oid),
-            der.encode_constructed(1, der.encode_bitstring(encoded_vk, 0)))
+            der.encode_constructed(1, der.encode_bitstring(encoded_vk, 0)),
+        )
+
+        if format == "ssleay":
+            return ec_private_key
+        else:
+            return der.encode_sequence(
+                # version = 1 means the public key is not present in the
+                # top-level structure.
+                der.encode_integer(1),
+                der.encode_sequence(
+                    der.encode_oid(*oid_ecPublicKey), self.curve.encoded_oid
+                ),
+                der.encode_octet_string(ec_private_key),
+            )
 
     def get_verifying_key(self):
         """
@@ -981,9 +1139,13 @@ class SigningKey(object):
         """
         return self.verifying_key
 
-    def sign_deterministic(self, data, hashfunc=None,
-                           sigencode=sigencode_string,
-                           extra_entropy=b''):
+    def sign_deterministic(
+        self,
+        data,
+        hashfunc=None,
+        sigencode=sigencode_string,
+        extra_entropy=b"",
+    ):
         """
         Create signature over data using the deterministic RFC6679 algorithm.
 
@@ -1020,12 +1182,21 @@ class SigningKey(object):
         digest = hashfunc(data).digest()
 
         return self.sign_digest_deterministic(
-            digest, hashfunc=hashfunc, sigencode=sigencode,
-            extra_entropy=extra_entropy, allow_truncate=True)
+            digest,
+            hashfunc=hashfunc,
+            sigencode=sigencode,
+            extra_entropy=extra_entropy,
+            allow_truncate=True,
+        )
 
-    def sign_digest_deterministic(self, digest, hashfunc=None,
-                                  sigencode=sigencode_string,
-                                  extra_entropy=b'', allow_truncate=False):
+    def sign_digest_deterministic(
+        self,
+        digest,
+        hashfunc=None,
+        sigencode=sigencode_string,
+        extra_entropy=b"",
+        allow_truncate=False,
+    ):
         """
         Create signature for digest using the deterministic RFC6679 algorithm.
 
@@ -1073,21 +1244,35 @@ class SigningKey(object):
         retry_gen = 0
         while True:
             k = rfc6979.generate_k(
-                self.curve.generator.order(), secexp, hashfunc, digest,
-                retry_gen=retry_gen, extra_entropy=extra_entropy)
+                self.curve.generator.order(),
+                secexp,
+                hashfunc,
+                digest,
+                retry_gen=retry_gen,
+                extra_entropy=extra_entropy,
+            )
             try:
-                r, s, order = self.sign_digest(digest,
-                                               sigencode=simple_r_s,
-                                               k=k,
-                                               allow_truncate=allow_truncate)
+                r, s, order = self.sign_digest(
+                    digest,
+                    sigencode=simple_r_s,
+                    k=k,
+                    allow_truncate=allow_truncate,
+                )
                 break
             except RSZeroError:
                 retry_gen += 1
 
         return sigencode(r, s, order)
 
-    def sign(self, data, entropy=None, hashfunc=None,
-             sigencode=sigencode_string, k=None):
+    def sign(
+        self,
+        data,
+        entropy=None,
+        hashfunc=None,
+        sigencode=sigencode_string,
+        k=None,
+        allow_truncate=True,
+    ):
         """
         Create signature over data using the probabilistic ECDSA algorithm.
 
@@ -1123,6 +1308,11 @@ class SigningKey(object):
         :param int k: a pre-selected nonce for calculating the signature.
             In typical use cases, it should be set to None (the default) to
             allow its generation from an entropy source.
+        :param bool allow_truncate: if True, the provided digest can have
+            bigger bit-size than the order of the curve, the extra bits (at
+            the end of the digest) will be truncated. Use it when signing
+            SHA-384 output using NIST256p or in similar situations. True by
+            default.
 
         :raises RSZeroError: in the unlikely event when "r" parameter or
             "s" parameter is equal 0 as that would leak the key. Calee should
@@ -1134,10 +1324,16 @@ class SigningKey(object):
         hashfunc = hashfunc or self.default_hashfunc
         data = normalise_bytes(data)
         h = hashfunc(data).digest()
-        return self.sign_digest(h, entropy, sigencode, k, allow_truncate=True)
+        return self.sign_digest(h, entropy, sigencode, k, allow_truncate)
 
-    def sign_digest(self, digest, entropy=None, sigencode=sigencode_string,
-                    k=None, allow_truncate=False):
+    def sign_digest(
+        self,
+        digest,
+        entropy=None,
+        sigencode=sigencode_string,
+        k=None,
+        allow_truncate=False,
+    ):
         """
         Create signature over digest using the probabilistic ECDSA algorithm.
 
@@ -1177,11 +1373,12 @@ class SigningKey(object):
         """
         digest = normalise_bytes(digest)
         if allow_truncate:
-            digest = digest[:self.curve.baselen]
+            digest = digest[: self.curve.baselen]
         if len(digest) > self.curve.baselen:
-            raise BadDigestError("this curve (%s) is too short "
-                                 "for your digest (%d)" % (self.curve.name,
-                                                           8 * len(digest)))
+            raise BadDigestError(
+                "this curve (%s) is too short "
+                "for your digest (%d)" % (self.curve.name, 8 * len(digest))
+            )
         number = string_to_number(digest)
         r, s = self.sign_number(number, entropy, k)
         return sigencode(r, s, self.privkey.order)
