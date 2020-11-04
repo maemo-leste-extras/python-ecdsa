@@ -2,6 +2,6 @@
 set -e
 
 cd "$AUTOPKGTEST_TMP"
-for py in $(py3versions -vi) ; do
+for py in $(py3versions -s) ; do
   python$py -m ecdsa.test_pyecdsa ;
 done
