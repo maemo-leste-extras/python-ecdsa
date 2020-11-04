@@ -10,6 +10,7 @@ python-ecdsa (0.16.0-1) UNRELEASED; urgency=medium
   * New upstream release (0.16.0)
   * Update autopkg test to use only Python supported versions instead of
     the installed ones
+  * Update package to use debhelper-compat (= 13)
 
  -- Josue Ortega <josue@debian.org>  Tue, 03 Nov 2020 19:06:20 -0600
 

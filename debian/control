@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Josue Ortega <josue@debian.org>
 Build-Depends:
- debhelper-compat (= 12),
+ debhelper-compat (= 13),
  dh-python,
  python3-setuptools,
  python3-all,
