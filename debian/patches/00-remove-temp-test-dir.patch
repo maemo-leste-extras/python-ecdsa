@@ -2,6 +2,7 @@ Description: Add override teardDown() function to cleanup directory after tests.
  dirty tree module at installation time
 Author: Josue Ortega <josue@debian.org>
 Last-Update: 2019-12-30
+Forwarded: not-needed
 
 
 --- a/src/ecdsa/test_pyecdsa.py
