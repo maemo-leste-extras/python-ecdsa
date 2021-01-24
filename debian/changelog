@@ -7,6 +7,7 @@ python-ecdsa (0.16.1-1) UNRELEASED; urgency=medium
   [ Josue Ortega ]
   * New upstream release (0.16.1)
   * Bump Standards-Version to 4.5.1. No changes required
+  * debian/watch: Bump file standard version to 4
 
  -- Josue Ortega <josue@debian.org>  Sun, 24 Jan 2021 16:41:24 -0600
 
