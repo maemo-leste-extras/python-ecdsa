@@ -1,4 +1,4 @@
-python-ecdsa (0.16.1-1) UNRELEASED; urgency=medium
+python-ecdsa (0.16.1-1) unstable; urgency=medium
 
   [ Debian Janitor ]
   * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository,
@@ -10,7 +10,7 @@ python-ecdsa (0.16.1-1) UNRELEASED; urgency=medium
   * debian/watch: Bump file standard version to 4
   * debian/patches: Document Forwarded field as not-needed
 
- -- Josue Ortega <josue@debian.org>  Sun, 24 Jan 2021 16:41:24 -0600
+ -- Josue Ortega <josue@debian.org>  Sun, 24 Jan 2021 16:49:10 -0600
 
 python-ecdsa (0.16.0-1) unstable; urgency=medium
 
